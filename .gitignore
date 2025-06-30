@@ -1,0 +1,15 @@
+# Ignore terraform tfvars file
+*.tfvars
+
+# Ignore all Terraform-generated files (keep only *.tf and *.tfvars)
+*.tfstate
+*.tfstate.*
+*.tfplan
+.crash
+.terraform/
+.terraform.lock.hcl
+*.backup
+*.log
+
+# Ignore all files inside minikube-ec2 directory
+infrastructure/minikube-ec2/*
