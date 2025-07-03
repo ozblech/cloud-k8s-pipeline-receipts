@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: receipts-api
+  labels:
+    app: receipts
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: receipts
+  template:
+    metadata:
+      labels:
+        app: receipts
+    spec:
+      containers:
+        - name: receipts
+          image: ozblech/receipts:latest
+          ports:
+            - containerPort: 5000
+          env:
+            - name: DB_CONNECTION_STRING
+              valueFrom:
+                configMapKeyRef:
+                  name: receipts-config
+                  key: DB_CONNECTION_STRING
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-credentials
+                  key: DB_USER
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-credentials
+                  key: DB_PASSWORD
+            - name: S3_BUCKET_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: receipts-config
+                  key: S3_BUCKET_NAME
+            - name: S3_REGION
+              valueFrom:
+                configMapKeyRef:
+                  name: receipts-config
+                  key: S3_REGION
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: aws-credentials
+                  key: AWS_ACCESS_KEY_ID
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: aws-credentials
+                  key: AWS_SECRET_ACCESS_KEY
+---
+# receipts-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: receipts-service
+spec:
+  selector:
+    app: receipts
+  ports:
+    - protocol: TCP
+      port: 5000
+      targetPort: 5000
+      nodePort: 30007
+  type: NodePort

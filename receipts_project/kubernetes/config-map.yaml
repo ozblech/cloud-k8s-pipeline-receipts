@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: receipts-config
+data:
+  DB_CONNECTION_STRING: "dbname='receipts' host='10.0.3.100'"
+  S3_BUCKET_NAME: "reciepts-app-cloud-bucket-oz2025"
+  S3_REGION: "us-west-2"
