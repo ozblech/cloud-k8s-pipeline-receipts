@@ -65,7 +65,16 @@ resource "aws_security_group" "postgres_sg" {
         protocol    = "tcp"
         security_groups = [aws_security_group.minikube_sg.id] 
         //cidr_blocks = allow only from private subnets??
+        //cidr_blocks = ["0.0.0.0/0"]
     }
+
+    // To test from my machine
+    # ingress {
+    #     from_port   = 5432
+    #     to_port     = 5432
+    #     protocol    = "tcp"
+    #     cidr_blocks = [var.my_ip] // My IP
+    # }
 
     // Only allows outbound HTTPS traffic (TCP 443).
     egress { 
@@ -99,6 +108,14 @@ resource "aws_security_group" "minikube_sg" {
     protocol    = "tcp"
     cidr_blocks = [var.my_ip] // My IP
     }
+
+    # ingress {
+    #     description = "Node-port access"
+    #     from_port   = 30007
+    #     to_port     = 30007
+    #     protocol    = "tcp"
+    #     cidr_blocks =[var.my_ip] // My IP
+    # }
 
     egress {
         from_port   = 0
@@ -215,23 +232,23 @@ resource "aws_key_pair" "ssh-key" {
     public_key = file(var.public_key_location)
 }
 
-# resource "aws_instance" "minikube_ec2" {
-#   ami                         = data.aws_ami.latest-amazon-linux-image-2023.id 
-#   instance_type               = "t3.medium"
-#   subnet_id                   = aws_subnet.public_subnets[0].id
-#   vpc_security_group_ids      = [aws_security_group.minikube_sg.id]
-#   key_name                    = aws_key_pair.ssh-key.key_name # For SSH access
-#   iam_instance_profile        = aws_iam_instance_profile.minikube_profile.name
-#   associate_public_ip_address = true // for ssh
+resource "aws_instance" "minikube_ec2" {
+  ami                         = data.aws_ami.latest-amazon-linux-image-2023.id 
+  instance_type               = "t3.medium"
+  subnet_id                   = aws_subnet.public_subnets[0].id
+  vpc_security_group_ids      = [aws_security_group.minikube_sg.id]
+  key_name                    = aws_key_pair.ssh-key.key_name # For SSH access
+  iam_instance_profile        = aws_iam_instance_profile.minikube_profile.name
+  associate_public_ip_address = true // for ssh
 
-#   tags = {
-#     Name = "minikube-ec2"
-#     Role = "minikube"
-#   }
+  tags = {
+    Name = "minikube-ec2"
+    Role = "minikube"
+  }
 
-#   user_data = file("${path.module}/minikube-bootstrap.sh")
-#   // cat /var/log/minikube-bootstrap.log
-# }
+  user_data = file("${path.module}/minikube-bootstrap.sh")
+  // cat /var/log/minikube-bootstrap.log
+}
 
 # resource "null_resource" "post_apply_script" {
 #   provisioner "local-exec" {
@@ -253,6 +270,7 @@ resource "aws_instance" "postgres_ec2" {
   key_name                    = aws_key_pair.ssh-key.key_name # For SSH access
   iam_instance_profile        = aws_iam_instance_profile.postgres_profile.name
   associate_public_ip_address = true // for ssh
+  private_ip                  = "10.0.3.100" // Static private IP for Postgres EC2
 
   tags = {
     Name = "postgres-ec2"
@@ -263,17 +281,22 @@ resource "aws_instance" "postgres_ec2" {
   // cat /var/log/postgres-bootstrap.log
 }
 
-# output minikube_ec2_public_ip {
-#   value       = aws_instance.minikube_ec2.public_ip
-# }
+output minikube_ec2_public_ip {
+  value       = aws_instance.minikube_ec2.public_ip
+}
 
 output postgres_ec2_public_ip {
   value       = aws_instance.postgres_ec2.public_ip
 }
 
+# Generate a random suffix for the bucket name
+# resource "random_id" "bucket_suffix" {
+#   byte_length = 4
+# }
+
 # S3
 resource "aws_s3_bucket" "reciepts_bucket" {
-  bucket = "minikube-bucket-${random_id.bucket_suffix.hex}"
+  bucket = "reciepts-app-cloud-bucket-oz2025"
   acl    = "private"
 
   tags = {

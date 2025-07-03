@@ -46,16 +46,39 @@ MINIKUBE_IP=$(ssh $EC2_USER@$EC2_IP "minikube ip")
 echo "📡 Minikube IP inside EC2: $MINIKUBE_IP"
 
 # 🚪 Start SSH tunnel to forward port 8443 from your local to Minikube
-ssh -f -N -L 8443:$MINIKUBE_IP:8443 $EC2_USER@$EC2_IP
+# If port 8443 is in use skip this step
+if lsof -i :8443; then
+  echo "⚠️ Port 8443 is already in use. Skipping SSH tunnel setup."
+else
+  echo "🔗 Setting up SSH tunnel to forward port 8443..."
+  ssh -f -N -L 8443:$MINIKUBE_IP:8443 $EC2_USER@$EC2_IP
+fi
 
 # Export kubeconfig so kubectl uses it
 export KUBECONFIG="$CONFIG_FILE_PATH"
 echo "✅ KUBECONFIG is set to: $KUBECONFIG"
 
+# 🚪 Start SSH tunnel to forward port 30007 from your local to minikube ip
+# If port 8443 is in use skip this step
+if lsof -i :5000; then
+  echo "⚠️ Port 5000 is already in use. Skipping SSH tunnel setup for port 5000."
+else
+  echo "🔗 Setting up SSH tunnel to forward port 5000..."
+  ssh $EC2_USER@$EC2_IP -f -L 5000:$MINIKUBE_IP:30007 -N
+fi
+
+
 # 🟢 All set
 echo "✅ Run this to test kubectl:"
 echo "kubectl get nodes"
+
  
  # 🔍 Test kubectl access
 echo "🔍 Testing kubectl access..."
 kubectl get nodes || echo "❌ Failed to connect to Minikube. Check your SSH tunnel and certs."
+
+# Kubectl apply all files in receipts_project/kubernetes
+echo "🔄 Applying Kubernetes manifests..."
+kubectl apply -f ../receipts_project/kubernetes/
+echo "✅ Kubernetes manifests applied successfully."
+

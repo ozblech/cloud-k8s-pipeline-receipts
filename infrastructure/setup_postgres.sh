@@ -30,6 +30,14 @@ sudo -u postgres psql <<EOF
 CREATE USER receipts_user WITH PASSWORD 'VeryStrongPassword123!';
 CREATE DATABASE receipts;
 GRANT ALL PRIVILEGES ON DATABASE receipts TO receipts_user;
+\connect receipts
+
+-- Give schema privileges
+GRANT USAGE ON SCHEMA public TO receipts_user;
+GRANT CREATE ON SCHEMA public TO receipts_user;
+
+-- Optional: Make receipts_user the owner of the public schema
+ALTER SCHEMA public OWNER TO receipts_user;
 EOF
 
 # 7. Harden authentication method in pg_hba.conf
@@ -43,7 +51,38 @@ systemctl restart postgresql
 # 9. Show final service status
 systemctl status postgresql
 
+export PGPASSWORD="VeryStrongPassword123!"
+# Wait until Postgres is up
+until psql -U receipts_user -d receipts -h localhost -c '\q'; do
+  echo "Waiting for PostgreSQL to be ready..."
+  sleep 2
+done
+
+# Create the receipts table
+psql -U receipts_user -d receipts -h localhost <<EOF
+CREATE TABLE IF NOT EXISTS receipts (
+    id SERIAL PRIMARY KEY,
+    filename TEXT NOT NULL,
+    vendor TEXT,
+    total NUMERIC,
+    purchase_date DATE,
+    uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+EOF
+
+echo "✅ Receipts table created (if it didn't exist)."
+
+# Set listen address to allow external connections
+sudo sed -i "s/^#listen_addresses =.*/listen_addresses = '*'/" /var/lib/pgsql/data/postgresql.conf
+
+# Add trusted subnet to pg_hba.conf
+echo "host    all             all             10.0.0.0/16            md5" | sudo tee -a /var/lib/pgsql/data/pg_hba.conf
+
+# Restart PostgreSQL
+sudo systemctl restart postgresql
+
 # /var/lib/pgsql/ is owned by LINUX postgres user
 # postgresql was installed in /usr/bin/psql 
 # ps aux | grep '[p]ostgres' 
 # shows that postgres is running as user postgres
+
