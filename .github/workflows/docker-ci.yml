@@ -1,0 +1,53 @@
+name: CI - Docker Build & Push
+
+on:
+  pull_request:
+    branches: [dev, main]
+    paths:
+      - 'receipts_project/**'
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r receipts_project/requirements.txt
+
+      - name: Run unit tests
+        run: |
+          pytest receipts_project/tests --maxfail=1 --disable-warnings -q
+  docker:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./receipts_project
+          file: ./receipts_project/Dockerfile
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/receipts-api:latest

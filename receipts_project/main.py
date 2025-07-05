@@ -64,18 +64,19 @@ def list_receipts():
         {"id": r[0], "filename": r[1], "vendor": r[2], "total": str(r[3]), "date": str(r[4])}
         for r in rows
     ])
-
+    
 @app.route("/health", methods=["GET"])
 def health():
-    # test connection to db
     try:
         cursor.execute("SELECT 1")
         result = cursor.fetchone()
     except Exception as e:
         return f"Failed to connect to DB: {e}", 500
+    return "OK", 200  # ✅ This line is required
 
 @app.route("/ready", methods=["GET"])
 def ready():
     return "Ready", 200
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
