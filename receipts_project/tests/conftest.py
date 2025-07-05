@@ -22,6 +22,6 @@ def patch_external_dependencies():
 
 @pytest.fixture
 def client(patch_external_dependencies):
-    import main  # Delayed import ensures boto3/psycopg2 are patched
+    import receipts_project.main as main  # Delayed import ensures boto3/psycopg2 are patched
     main.app.config["TESTING"] = True
     return main.app.test_client(), patch_external_dependencies, main
