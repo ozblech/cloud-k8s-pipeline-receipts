@@ -11,6 +11,7 @@ on:
     branches: [main]
     paths:
       - 'receipts_project/**'
+      - '.github/workflows/**'
 
 jobs:
   unit-tests:
