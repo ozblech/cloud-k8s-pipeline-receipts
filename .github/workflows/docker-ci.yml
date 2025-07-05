@@ -5,6 +5,7 @@ on:
     branches: [dev, main]
     paths:
       - 'receipts_project/**'
+      - '.github/workflows/**'
 
   push:
     branches: [main]
@@ -15,7 +16,7 @@ jobs:
   unit-tests:
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
-    
+
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
