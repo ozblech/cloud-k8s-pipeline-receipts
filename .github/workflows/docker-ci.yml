@@ -5,13 +5,13 @@ on:
     branches: [dev, main]
     paths:
       - 'receipts_project/**'
-      - '.github/workflows/**'
+      - '.github/**'
 
   push:
     branches: [main]
     paths:
       - 'receipts_project/**'
-      - '.github/workflows/**'
+      - '.github/**'
 
 jobs:
   unit-tests:
