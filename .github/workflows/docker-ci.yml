@@ -81,9 +81,9 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
         
-      - name: echo new image tag
-        run: |
-          echo "New image tag: ${{ needs.extract-image-tag.outputs.new_image_tag }}"
+      - name: Debug pushed image reference
+        run: | 
+          echo "Pushing tag: ${{ secrets.DOCKERHUB_USERNAME }}/receipts-api:${{ needs.extract-image-tag.outputs.new_image_tag }}"
         
 
       - name: Build and push Docker image
