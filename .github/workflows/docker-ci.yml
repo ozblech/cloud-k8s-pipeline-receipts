@@ -12,6 +12,9 @@ on:
     paths:
       - 'receipts_project/**'
       - '.github/**'
+  
+permissions:
+  contents: write # Needed to push Git tags
 
 jobs:
   unit-tests:
@@ -77,6 +80,11 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
+        
+      - name: echo new image tag
+        run: |
+          echo "New image tag: ${{ needs.extract-image-tag.outputs.new_image_tag }}"
+        
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
