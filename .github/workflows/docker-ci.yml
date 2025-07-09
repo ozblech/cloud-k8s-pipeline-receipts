@@ -94,12 +94,12 @@ jobs:
             fi
 
       # upload the new image tag as an artifact in order to use it in the deploy workflow
-      - name: Save image tag output
-        run: |
-          echo "${{ steps.extract-image-tag.outputs.new_image_tag }}" > image-tag.txt
+      # - name: Save image tag output
+      #   run: |
+      #     echo "${{ steps.extract-image-tag.outputs.new_image_tag }}" > image-tag.txt
 
-      - name: Upload image tag artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: image-tag
-          path: image-tag.txt
+      # - name: Upload image tag artifact
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: image-tag
+      #     path: image-tag.txt
