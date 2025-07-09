@@ -9,23 +9,20 @@ on:
 jobs:
   deploy:
     name: Deploy to EC2 Minikube
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-    
-      - name: Download image tag artifact
+      - name: Download image-tag artifact
         uses: actions/download-artifact@v4
         with:
           name: image-tag
 
-      - name: Read image tag
-        id: read-tag
+      - name: Read image tag from artifact
+        id: read-image-tag
         run: |
-          TAG=$(cat image-tag.txt)
-          echo "IMAGE_TAG=$TAG" >> $GITHUB_ENV
-          echo "image_tag=$TAG" >> $GITHUB_OUTPUT  
+          IMAGE_TAG=$(cat image-tag.txt)
+          echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
 
       - name: Setup SSH key
         run: |
