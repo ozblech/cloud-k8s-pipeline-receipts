@@ -20,6 +20,7 @@ infrastructure/minikube-ec2/*
 # Ignore secret files
 receipts_project/kubernetes/aws-credentials-secret.yaml
 receipts_project/kubernetes/postgres-secret.yaml
+receipts_project/kubernetes/secrets.yaml
 
 # Ignore instruction files
 receipts_project/kubernetes/instructions*
