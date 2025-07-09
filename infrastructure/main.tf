@@ -281,6 +281,20 @@ resource "aws_instance" "postgres_ec2" {
   // cat /var/log/postgres-bootstrap.log
 }
 
+
+resource "aws_eip" "minikube_eip" {
+  vpc = true
+}
+
+resource "aws_eip_association" "minikube_eip_assoc" {
+  instance_id   = aws_instance.minikube_ec2.id
+  allocation_id = aws_eip.minikube_eip.id
+}
+
+output "minikube_public_ip" {
+  value       = aws_eip.minikube_eip.public_ip
+}
+
 output minikube_ec2_public_ip {
   value       = aws_instance.minikube_ec2.public_ip
 }

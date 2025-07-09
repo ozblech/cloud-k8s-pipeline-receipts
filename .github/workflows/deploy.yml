@@ -1,0 +1,50 @@
+name: CD - Deploy with kubectl
+
+on:
+  workflow_run:
+    workflows: ["Test and Docker Build & Push and Tag"]
+    types:
+      - completed
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    name: Deploy to EC2 Minikube
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+    
+      - name: Download image tag artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: image-tag
+
+      - name: Read image tag
+        id: read-tag
+        run: |
+          TAG=$(cat image-tag.txt)
+          echo "IMAGE_TAG=$TAG" >> $GITHUB_ENV
+          echo "image_tag=$TAG" >> $GITHUB_OUTPUT  
+
+      - name: Setup SSH key
+        run: |
+          echo "${{ secrets.EC2_SSH_KEY }}" > ec2_key.pem
+          chmod 600 ec2_key.pem
+
+      - name: Deploy to Minikube via SSH
+        run: |
+          ssh -o StrictHostKeyChecking=no -i ec2_key.pem ec2-user@${{ secrets.EC2_HOST }} << 'EOF'
+            echo "Updating image to tag: ${{ github.event.inputs.image_tag }}"
+
+            # Ensure kubectl is using Minikube
+            export KUBECONFIG=$HOME/.kube/config
+
+            # Set new image in the deployment
+            kubectl set image deployment/receipts-api receipts-api=ozblech/receipts-api:${{ github.event.inputs.image_tag }} -n default
+
+            # Verify rollout status
+            kubectl rollout status deployment/receipts-api -n default
+          EOF
