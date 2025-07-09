@@ -1,0 +1,23 @@
+# Default values for helm_chart.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# This will set the replicaset count more information can be found here: https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/
+replicaCount: 1
+
+appName: "receipts-app"
+
+# This sets the container image more information can be found here: https://kubernetes.io/docs/concepts/containers/images/
+image:
+    repository: ozblech/receipts-api
+    tag: 1.0.2-9e9201d
+    pullPolicy: Always
+    containerPort: 5000
+
+
+service:
+    port: 3000
+
+
+
+

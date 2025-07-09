@@ -22,38 +22,38 @@ spec:
           env:
             - name: DB_CONNECTION_STRING
               valueFrom:
-                configMapKeyRef:
-                  name: receipts-config
+                secretKeyRef:
+                  name: receipts-secret
                   key: DB_CONNECTION_STRING
             - name: DB_USER
               valueFrom:
                 secretKeyRef:
-                  name: postgres-credentials
+                  name: receipts-secret
                   key: DB_USER
             - name: DB_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: postgres-credentials
+                  name: receipts-secret
                   key: DB_PASSWORD
             - name: S3_BUCKET_NAME
               valueFrom:
-                configMapKeyRef:
-                  name: receipts-config
+                secretKeyRef:
+                  name: receipts-secret
                   key: S3_BUCKET_NAME
             - name: S3_REGION
               valueFrom:
-                configMapKeyRef:
-                  name: receipts-config
+                secretKeyRef:
+                  name: receipts-secret
                   key: S3_REGION
             - name: AWS_ACCESS_KEY_ID
               valueFrom:
                 secretKeyRef:
-                  name: aws-credentials
+                  name: receipts-secret
                   key: AWS_ACCESS_KEY_ID
             - name: AWS_SECRET_ACCESS_KEY
               valueFrom:
                 secretKeyRef:
-                  name: aws-credentials
+                  name: receipts-secret
                   key: AWS_SECRET_ACCESS_KEY
 ---
 # receipts-service.yaml
