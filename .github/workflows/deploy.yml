@@ -2,7 +2,7 @@ name: CD - Deploy with kubectl
 
 on:
   workflow_run:
-    workflows: ["Test and Docker Build & Push and Tag"]
+    workflows: ["CI - Test and Docker Build & Push and Tag"]
     types:
       - completed
   push:
