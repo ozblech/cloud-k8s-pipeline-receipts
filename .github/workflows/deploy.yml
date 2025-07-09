@@ -40,7 +40,7 @@ jobs:
             export KUBECONFIG=$HOME/.kube/config
 
             # Set new image in the deployment
-            kubectl set image deployment/receipts-api receipts-api=ozblech/receipts-api:${{ steps.extract-image-tag.outputs.current_image_tag }} -n default
+            kubectl set image deployment/receipts receipts=ozblech/receipts-api:${{ steps.extract-image-tag.outputs.current_image_tag }} -n default
 
             # Verify rollout status
             kubectl rollout status deployment/receipts-api -n default

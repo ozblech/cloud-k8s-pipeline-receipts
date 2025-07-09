@@ -1,7 +1,7 @@
 set -e
 
 EC2_USER=ec2-user
-EC2_IP=$(terraform output -raw minikube_ec2_public_ip)
+EC2_IP=$(terraform output -raw minikube_public_ip)
 REMOTE_KUBECONFIG='~/.kube/config'
 LOCAL_DIR=./minikube-ec2
 ABS_DIR=$(realpath "$LOCAL_DIR")
