@@ -102,6 +102,14 @@ resource "aws_security_group" "minikube_sg" {
     }
 
     ingress {
+        description = "SSH access from github actions"
+        from_port   = 22
+        to_port     = 22
+        protocol    = "tcp"
+        cidr_blocks = ["0.0.0.0/0"] // Allow SSH from anywhere (for testing purposes)
+    }
+
+    ingress {
     description = "Kubernetes API access"
     from_port   = 8443
     to_port     = 8443
