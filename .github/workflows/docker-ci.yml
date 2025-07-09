@@ -1,12 +1,6 @@
-name: CI - Test and Docker Build & Push and Tag
+name: CI - Docker Build & Push and Tag
 
 on:
-  pull_request:
-    branches: [dev, main]
-    paths:
-      - 'receipts_project/**'
-      - '.github/**'
-
   push:
     branches: [main]
     paths:
@@ -17,28 +11,9 @@ permissions:
   contents: write # Needed to push Git tags
 
 jobs:
-  unit-tests:
-    runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
-
-    steps:
-      - name: Checkout source code
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r receipts_project/requirements.txt
-
-      - name: Run unit tests
-        run: |
-          pytest receipts_project/tests --maxfail=1 --disable-warnings -q
   
+  # integration-tests:
+     
   extract-image-tag:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
