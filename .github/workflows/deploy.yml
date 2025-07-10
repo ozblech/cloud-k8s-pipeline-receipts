@@ -27,9 +27,10 @@ jobs:
           echo "${{ secrets.EC2_SSH_KEY }}" > ec2_key.pem
           chmod 600 ec2_key.pem
     
-      - name: echo current image tag
+      - name: echo current image tag and minikube IP
         run: |
             echo "Current image tag: ${{ steps.extract-image-tag.outputs.current_image_tag }}"
+            echo "Minikube IP: ${{ secrets.EC2_HOST }}"
 
       - name: Deploy to Minikube via SSH
         run: |
