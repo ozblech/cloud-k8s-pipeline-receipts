@@ -1,5 +1,9 @@
 name: CD - Deploy with kubectl
 
+permissions:
+  id-token: write  # Required for OIDC
+  contents: read
+
 on:
   workflow_run:
     workflows: ["CI - Docker Build & Push and Tag"]
@@ -32,9 +36,27 @@ jobs:
             echo "Current image tag: ${{ steps.extract-image-tag.outputs.current_image_tag }}"
             echo "Minikube IP: ${{ secrets.EC2_HOST }}"
 
+      - name: Configure AWS credentials (via OIDC)
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: "arn:aws:iam:: ${{ secrets.AWS_ACCOUNT_ID }}:role/github_actions_role"
+          aws-region: us-west-2
+
+      - name: Fetch EC2 public IP
+        id: ec2
+        run: |
+          dns=$(aws ec2 describe-instances \
+            --filters "Name=tag:Name,Values=minikube-ec2" \
+            --query "Reservations[0].Instances[0].PublicDnsName" \
+            --output text)
+          echo "public_dns=$dns" >> $GITHUB_OUTPUT
+
+      - name: Print DNS
+        run: echo "DNS is ${{ steps.ec2.outputs.public_dns }}"
+
       - name: Deploy to Minikube via SSH
         run: |
-          ssh -o StrictHostKeyChecking=no -i ec2_key.pem ec2-user@${{ secrets.EC2_HOST }} << 'EOF'
+          ssh -o StrictHostKeyChecking=no -i ec2_key.pem ec2-user@${{ steps.ec2.outputs.public_dns }} << 'EOF'
             echo "Updating image to tag: ${{ steps.extract-image-tag.outputs.current_image_tag }}"
 
             # Ensure kubectl is using Minikube

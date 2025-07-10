@@ -291,19 +291,19 @@ resource "aws_instance" "postgres_ec2" {
 
 //This is a static Elastic IP (EIP) you allocate using Terraform and then explicitly associate with your EC2 instance.
 //It remains permanently reserved to your account, even if the instance is stopped or recreated (as long as you re-associate it).
-resource "aws_eip" "minikube_eip" {
-  vpc = true
-}
+# resource "aws_eip" "minikube_eip" {
+#   vpc = true
+# }
 
-resource "aws_eip_association" "minikube_eip_assoc" {
-  instance_id   = aws_instance.minikube_ec2.id
-  allocation_id = aws_eip.minikube_eip.id
-}
+# resource "aws_eip_association" "minikube_eip_assoc" {
+#   instance_id   = aws_instance.minikube_ec2.id
+#   allocation_id = aws_eip.minikube_eip.id
+# }
 
-// Elastic IP for Minikube EC2
-output "minikube_public_ip" {
-  value       = aws_eip.minikube_eip.public_ip
-}
+# // Elastic IP for Minikube EC2
+# output "minikube_public_ip" {
+#   value       = aws_eip.minikube_eip.public_ip
+# }
 
 output minikube_ec2_public_ip {
   value       = aws_instance.minikube_ec2.public_ip
@@ -326,5 +326,63 @@ resource "aws_s3_bucket" "reciepts_bucket" {
   tags = {
     Name        = "Reciepts Bucket"
   }
+}
+
+# OIDC Provider for GitHub Actions
+resource "aws_iam_openid_connect_provider" "github" {
+  url = "https://token.actions.githubusercontent.com"
+
+  client_id_list = [
+    "sts.amazonaws.com"
+  ]
+
+  thumbprint_list = [
+    "6938fd4d98bab03faadb97b34396831e3780aea1" # GitHub Actions thumbprint
+  ]
+}
+
+# IAM Role for GitHub Actions
+resource "aws_iam_role" "github_actions_role" {
+  name = "github-actions-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow",
+        Principal = {
+          Federated = aws_iam_openid_connect_provider.github.arn
+        },
+        Action = "sts:AssumeRoleWithWebIdentity",
+        Condition = {
+          StringLike = {
+            "token.actions.githubusercontent.com:sub" = "repo:${var.github_repo}:*"
+          }
+        }
+      }
+    ]
+  })
+}
+
+# Example Policy attachment
+resource "aws_iam_role_policy" "github_actions_policy" {
+  name = "github-actions-policy"
+  role = aws_iam_role.github_actions_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect   = "Allow",
+        Action   = [
+          "ec2:DescribeInstances",
+          "ssm:SendCommand",
+          "ssm:GetCommandInvocation",
+          "ssm:DescribeInstanceInformation"
+        ],
+        Resource = "*"
+      }
+    ]
+  })
 }
 
