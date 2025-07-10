@@ -59,7 +59,7 @@ export KUBECONFIG="$CONFIG_FILE_PATH"
 echo "✅ KUBECONFIG is set to: $KUBECONFIG"
 
 # 🚪 Start SSH tunnel to forward port 30007 from your local to minikube ip
-# If port 8443 is in use skip this step
+# If port 5000 is in use skip this step
 if lsof -i :5000; then
   echo "⚠️ Port 5000 is already in use. Skipping SSH tunnel setup for port 5000."
 else
@@ -81,4 +81,7 @@ kubectl get nodes || echo "❌ Failed to connect to Minikube. Check your SSH tun
 echo "🔄 Applying Kubernetes manifests..."
 kubectl apply -f ../receipts_project/kubernetes/
 echo "✅ Kubernetes manifests applied successfully."
+
+# Run this script with: source setup-minikube.sh
+# so that the KUBECONFIG variable is set in the current shell session.
 
