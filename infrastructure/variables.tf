@@ -1,11 +1,9 @@
 variable "region" {
-  default = "us-west-2"
 }
 
 variable "vpc_cidr" {
   default = "10.0.0.0/16" // for addresses 10.0.0.1 - 10.0.255.254 Network:   10.0.0.0/16   Broadcast: 10.0.255.255 
 }
-
 
 variable "vpc_name" {
   default = "my-vpc"
@@ -29,4 +27,14 @@ variable "my_ip"{
 }
 
 variable "public_key_location"{
+}
+
+variable "aws_account_id" {
+  description = "Your AWS account ID"
+  type        = string
+}
+
+variable "github_repo" {
+  description = "GitHub repo in the format: org/repo"
+  type        = string
 }
