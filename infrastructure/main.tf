@@ -289,7 +289,8 @@ resource "aws_instance" "postgres_ec2" {
   // cat /var/log/postgres-bootstrap.log
 }
 
-
+//This is a static Elastic IP (EIP) you allocate using Terraform and then explicitly associate with your EC2 instance.
+//It remains permanently reserved to your account, even if the instance is stopped or recreated (as long as you re-associate it).
 resource "aws_eip" "minikube_eip" {
   vpc = true
 }
@@ -299,6 +300,7 @@ resource "aws_eip_association" "minikube_eip_assoc" {
   allocation_id = aws_eip.minikube_eip.id
 }
 
+// Elastic IP for Minikube EC2
 output "minikube_public_ip" {
   value       = aws_eip.minikube_eip.public_ip
 }
