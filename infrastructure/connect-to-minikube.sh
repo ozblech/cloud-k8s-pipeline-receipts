@@ -84,4 +84,5 @@ echo "✅ Kubernetes manifests applied successfully."
 
 # Run this script with: source setup-minikube.sh
 # so that the KUBECONFIG variable is set in the current shell session.
+# or run export KUBECONFIG=./infrastructure/minikube-ec2/minikube-ec2-config
 

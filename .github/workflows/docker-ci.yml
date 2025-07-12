@@ -29,8 +29,6 @@ jobs:
       - name: Extract image tag
         id: extract-image-tag
         uses: ./.github/actions/extract-image-tag
-        with:
-          working-directory: receipts_project
 
   docker-build-push:
     runs-on: ubuntu-latest
