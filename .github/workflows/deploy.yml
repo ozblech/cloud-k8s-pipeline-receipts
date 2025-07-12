@@ -70,11 +70,11 @@ jobs:
         run: |
           export IMAGE_REPO="ozblech/receipts-api"
           export DEPLOYMENT_NAME="receipts-api"
-          ssh -o StrictHostKeyChecking=no -i ec2_key.pem ec2-user@${{ steps.ec2.outputs.public_dns }} << 'EOF'
+          ssh -o StrictHostKeyChecking=no -i ec2_key.pem ec2-user@${{ steps.ec2.outputs.public_dns }} << EOF
             echo "🚀 Deploying image: $IMAGE_REPO:$IMAGE_TAG"
 
             # Ensure kubectl is using Minikube
-            export KUBECONFIG=$HOME/.kube/config
+            export KUBECONFIG=\$HOME/.kube/config
 
             # Set new image in the deployment
             kubectl set image deployment/$DEPLOYMENT_NAME \
