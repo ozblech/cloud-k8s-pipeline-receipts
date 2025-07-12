@@ -59,7 +59,7 @@ jobs:
             REVISION_INPUT: ${{ github.event.inputs.revision }}
             PREVIOUS_IMAGE_TAG: ${{ needs.get-latest-tag.outputs.previous_image_tag }}
         run: |
-            ssh -o StrictHostKeyChecking=no -i ec2_key.pem ec2-user@${{ steps.fetch-minikube-ec2-ip.outputs.public_dns }} << 'EOF'
+            ssh -o StrictHostKeyChecking=no -i ec2_key.pem ec2-user@${{ steps.fetch-minikube-ec2-ip.outputs.public_dns }} << EOF
             export KUBECONFIG=\$HOME/.kube/config
 
             if [ -z "$REVISION_INPUT" ]; then
