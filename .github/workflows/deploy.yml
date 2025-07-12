@@ -2,7 +2,7 @@ name: CD - Deploy with kubectl
 
 permissions:
   id-token: write  # Required for OIDC
-  contents: read
+  contents: read   # Required for actions/checkout
 
 on:
   workflow_run:
@@ -34,7 +34,6 @@ jobs:
       - name: echo current image tag and minikube IP
         run: |
             echo "Current image tag: ${{ steps.extract-image-tag.outputs.current_image_tag }}"
-            echo "Minikube IP: ${{ secrets.EC2_HOST }}"
 
       - name: Debug OIDC sub claim
         uses: actions/github-script@v7
@@ -42,7 +41,10 @@ jobs:
             script: |
                 const id_token = await core.getIDToken();
                 core.info(`OIDC token: ${id_token}`);
-        
+
+        # For OIDC we need to edit GitHub → Repo → Settings → Actions → General → Workflow permissions 
+        # Select "Read and write permissions"
+        # and check "Allow GitHub Actions to create and approve pull requests"
       - name: Configure AWS credentials (via OIDC)
         uses: aws-actions/configure-aws-credentials@v2
         with:
@@ -54,24 +56,31 @@ jobs:
         run: |
           dns=$(aws ec2 describe-instances \
             --filters "Name=tag:Name,Values=minikube-ec2" \
+                     "Name=instance-state-name,Values=running" \
             --query "Reservations[0].Instances[0].PublicDnsName" \
             --output text)
-          echo "public_dns=$dns" >> $GITHUB_OUTPUT
+          echo "public_dns=$dns" >> "$GITHUB_OUTPUT"
 
       - name: Print DNS
         run: echo "DNS is ${{ steps.ec2.outputs.public_dns }}"
 
       - name: Deploy to Minikube via SSH
+        env:
+          IMAGE_TAG: ${{ steps.extract-image-tag.outputs.current_image_tag }}
         run: |
+          export IMAGE_REPO="ozblech/receipts-api"
+          export DEPLOYMENT_NAME="receipts-api"
           ssh -o StrictHostKeyChecking=no -i ec2_key.pem ec2-user@${{ steps.ec2.outputs.public_dns }} << 'EOF'
-            echo "Updating image to tag: ${{ steps.extract-image-tag.outputs.current_image_tag }}"
+            echo "🚀 Deploying image: $IMAGE_REPO:$IMAGE_TAG"
 
             # Ensure kubectl is using Minikube
             export KUBECONFIG=$HOME/.kube/config
 
             # Set new image in the deployment
-            kubectl set image deployment/receipts-api receipts=ozblech/receipts-api:${{ steps.extract-image-tag.outputs.current_image_tag }} -n default
+            kubectl set image deployment/$DEPLOYMENT_NAME \
+              receipts=$IMAGE_REPO:$IMAGE_TAG \
+              -n default
 
             # Verify rollout status
-            kubectl rollout status deployment/receipts-api -n default
+            kubectl rollout status deployment/$DEPLOYMENT_NAME -n default
           EOF

@@ -38,3 +38,13 @@ variable "github_repo" {
   description = "GitHub repo in the format: org/repo"
   type        = string
 }
+
+variable "s3_bucket_name" {
+  description = "Name of the S3 bucket for storing app data"
+  type        = string
+}
+
+variable "postgres_ec2_private_ip" {
+  description = "Private IP address of the PostgreSQL EC2 instance"
+  type        = string
+}

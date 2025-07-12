@@ -278,7 +278,7 @@ resource "aws_instance" "postgres_ec2" {
   key_name                    = aws_key_pair.ssh-key.key_name # For SSH access
   iam_instance_profile        = aws_iam_instance_profile.postgres_profile.name
   associate_public_ip_address = true // for ssh
-  private_ip                  = "10.0.3.100" // Static private IP for Postgres EC2
+  private_ip                  = var.postgres_ec2_private_ip // Static private IP for Postgres EC2
 
   tags = {
     Name = "postgres-ec2"
@@ -320,7 +320,7 @@ output postgres_ec2_public_ip {
 
 # S3
 resource "aws_s3_bucket" "reciepts_bucket" {
-  bucket = "reciepts-app-cloud-bucket-oz2025"
+  bucket = var.s3_bucket_name
   acl    = "private"
 
   tags = {
@@ -356,7 +356,7 @@ resource "aws_iam_role" "github_actions_role" {
         Action = "sts:AssumeRoleWithWebIdentity",
         Condition = {
           StringLike = {
-            "token.actions.githubusercontent.com:sub" = "repo:ozblech/cloud-k8s-pipeline-receipts:*"
+            "token.actions.githubusercontent.com:sub" = "repo:${var.github_repo}:*"
           }
         }
       }
