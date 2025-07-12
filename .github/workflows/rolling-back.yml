@@ -3,7 +3,7 @@ name: CD - Rollback Deployment
 permissions:
   id-token: write
   contents: read
-  
+
 on:
   workflow_dispatch:
     inputs:
@@ -25,6 +25,10 @@ jobs:
       - name: Get latest Git tag
         id: extract-image-tag
         uses: ./.github/actions/extract-image-tag
+
+      - name: Echo previous image tag
+        run: |
+            echo "Previous image tag: ${{ steps.extract-image-tag.outputs.previous_image_tag }}"   
 
   rollback:
     needs: get-latest-tag  # <-- Required to access outputs
@@ -49,19 +53,22 @@ jobs:
         run: echo "DNS is ${{ steps.fetch-minikube-ec2-ip.outputs.public_dns }}"
 
       - name: Rollback via SSH
+        env:
+            IMAGE_REPO: ozblech/receipts-api
+            DEPLOYMENT_NAME: receipts-api
+            REVISION_INPUT: ${{ github.event.inputs.revision }}
+            PREVIOUS_IMAGE_TAG: ${{ needs.get-latest-tag.outputs.previous_image_tag }}
         run: |
-            export IMAGE_REPO="ozblech/receipts-api"
-            export DEPLOYMENT_NAME="receipts-api"
-            ssh -o StrictHostKeyChecking=no -i ec2_key.pem ec2-user@${{ steps.fetch-minikube-ec2-ip.outputs.public_dns }} << EOF
-                export KUBECONFIG=\$HOME/.kube/config
+            ssh -o StrictHostKeyChecking=no -i ec2_key.pem ec2-user@${{ steps.fetch-minikube-ec2-ip.outputs.public_dns }} << 'EOF'
+            export KUBECONFIG=\$HOME/.kube/config
 
-                if [ -z "${{ github.event.inputs.revision }}" ]; then
-                    echo "Rolling back to previous image tag: ${{ needs.get-latest-tag.outputs.previous_image_tag }}"
-                    kubectl set image deployment/receipts-api receipts=ozblech/receipts-api:${{ needs.get-latest-tag.outputs.previous_image_tag }} -n default
-                else
-                    echo "Rolling back to revision: ${{ github.event.inputs.revision }}"
-                    kubectl rollout undo deployment/receipts-api --to-revision=${{ github.event.inputs.revision }} -n default
-                fi
+            if [ -z "$REVISION_INPUT" ]; then
+                echo "Rolling back to previous image tag: $PREVIOUS_IMAGE_TAG"
+                kubectl set image deployment/$DEPLOYMENT_NAME receipts=$IMAGE_REPO:$PREVIOUS_IMAGE_TAG -n default
+            else
+                echo "Rolling back to revision: $REVISION_INPUT"
+                kubectl rollout undo deployment/$DEPLOYMENT_NAME --to-revision=$REVISION_INPUT -n default
+            fi
 
-                kubectl rollout status deployment/receipts-api -n default
+            kubectl rollout status deployment/$DEPLOYMENT_NAME -n default
             EOF
