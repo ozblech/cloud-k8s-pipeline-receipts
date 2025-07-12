@@ -31,11 +31,12 @@ jobs:
           echo "${{ secrets.EC2_SSH_KEY }}" > ec2_key.pem
           chmod 600 ec2_key.pem
         
-      - name: get minikube IP
+      - name: Fetch minikube IP
         id: fetch-minikube-ec2-ip
         uses: ./.github/actions/fetch-ec2-public-ip
         with:
           tag_name: minikube-ec2
+          aws_account_id: ${{ secrets.AWS_ACCOUNT_ID }}
         
       - name: Print DNS
         run: echo "DNS is ${{ steps.fetch-minikube-ec2-ip.outputs.public_dns }}"
