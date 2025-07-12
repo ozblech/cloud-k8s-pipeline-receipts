@@ -1,0 +1,36 @@
+name: Fetch-EC2-Public-IP
+description: "Fetches the public IP of an EC2 instance based on its tag name and state."
+
+inputs:
+  tag_name:
+    description: "The Name tag of the EC2 instance"
+    required: true
+
+outputs:
+  public_dns:
+    description: "Public DNS name of the EC2 instance using OIDC authentication"
+    value: ${{ steps.fetch-ec2-ip.outputs.public_dns }}
+
+runs:
+  using: "composite"
+  steps:
+  # For OIDC we need to edit GitHub → Repo → Settings → Actions → General → Workflow permissions 
+  # Select "Read and write permissions"
+  # and check "Allow GitHub Actions to create and approve pull requests"
+    - name: Configure AWS credentials (via OIDC)
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+            role-to-assume: "arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-actions-role"
+            aws-region: us-west-2
+
+    - name: Fetch EC2 public IP
+      id: fetch-ec2-ip
+      shell: bash
+      run: |
+          dns=$(aws ec2 describe-instances \
+            --filters "Name=tag:Name,Values=${{ inputs.tag_name }}" \
+                     "Name=instance-state-name,Values=running" \
+            --query "Reservations[0].Instances[0].PublicDnsName" \
+            --output text)
+          echo "public_dns=$dns" >> "$GITHUB_OUTPUT"
+          

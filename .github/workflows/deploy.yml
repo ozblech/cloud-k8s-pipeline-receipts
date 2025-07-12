@@ -35,34 +35,14 @@ jobs:
         run: |
             echo "Current image tag: ${{ steps.extract-image-tag.outputs.current_image_tag }}"
 
-      - name: Debug OIDC sub claim
-        uses: actions/github-script@v7
-        with:
-            script: |
-                const id_token = await core.getIDToken();
-                core.info(`OIDC token: ${id_token}`);
-
-        # For OIDC we need to edit GitHub → Repo → Settings → Actions → General → Workflow permissions 
-        # Select "Read and write permissions"
-        # and check "Allow GitHub Actions to create and approve pull requests"
-      - name: Configure AWS credentials (via OIDC)
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-            role-to-assume: "arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-actions-role"
-            aws-region: us-west-2
-
       - name: Fetch EC2 public IP
-        id: ec2
-        run: |
-          dns=$(aws ec2 describe-instances \
-            --filters "Name=tag:Name,Values=minikube-ec2" \
-                     "Name=instance-state-name,Values=running" \
-            --query "Reservations[0].Instances[0].PublicDnsName" \
-            --output text)
-          echo "public_dns=$dns" >> "$GITHUB_OUTPUT"
+        id: fetch-minikube-ec2-ip
+        uses: ./.github/actions/fetch-ec2-public-ip
+        with:
+          tag_name: minikube-ec2
 
       - name: Print DNS
-        run: echo "DNS is ${{ steps.ec2.outputs.public_dns }}"
+        run: echo "DNS is ${{ steps.fetch-minikube-ec2-ip.outputs.public_dns }}"
 
       - name: Deploy to Minikube via SSH
         env:
@@ -70,7 +50,7 @@ jobs:
         run: |
           export IMAGE_REPO="ozblech/receipts-api"
           export DEPLOYMENT_NAME="receipts-api"
-          ssh -o StrictHostKeyChecking=no -i ec2_key.pem ec2-user@${{ steps.ec2.outputs.public_dns }} << EOF
+          ssh -o StrictHostKeyChecking=no -i ec2_key.pem ec2-user@${{ steps.fetch-minikube-ec2-ip.outputs.public_dns }} << EOF
             echo "🚀 Deploying image: $IMAGE_REPO:$IMAGE_TAG"
 
             # Ensure kubectl is using Minikube
