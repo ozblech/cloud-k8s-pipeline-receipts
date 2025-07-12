@@ -11,6 +11,12 @@ outputs:
   current_image_tag:
     description: "Current image tag without 'v' prefix (e.g., 1.0.14-a1b2c3d)"
     value: ${{ steps.extract.outputs.current_image_tag }}
+  previous_image_tag:
+    description: "Previous image tag (e.g., 1.0.13-a1b2c3d)"
+    value: ${{ steps.extract.outputs.previous_image_tag }}
+  previous_version:
+    description: "Previous version with 'v' prefix (e.g., v1.0.13)"
+    value: ${{ steps.extract.outputs.previous_version }}
 
 runs:
   using: "composite"
