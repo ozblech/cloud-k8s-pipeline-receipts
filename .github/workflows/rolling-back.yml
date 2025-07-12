@@ -1,5 +1,9 @@
 name: CD - Rollback Deployment
 
+permissions:
+  id-token: write
+  contents: read
+  
 on:
   workflow_dispatch:
     inputs:
@@ -28,13 +32,13 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        
+
       - name: Setup SSH key
         run: |
           echo "${{ secrets.EC2_SSH_KEY }}" > ec2_key.pem
           chmod 600 ec2_key.pem
         
-      - name: Fetch minikube IP
+      - name: Fetch EC2 public IP
         id: fetch-minikube-ec2-ip
         uses: ./.github/actions/fetch-ec2-public-ip
         with:
