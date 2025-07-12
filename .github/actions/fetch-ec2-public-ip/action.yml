@@ -5,6 +5,9 @@ inputs:
   tag_name:
     description: "The Name tag of the EC2 instance"
     required: true
+  aws_account_id:
+    description: "AWS Account ID to construct the role ARN"
+    required: true
 
 outputs:
   public_dns:
@@ -20,7 +23,7 @@ runs:
     - name: Configure AWS credentials (via OIDC)
       uses: aws-actions/configure-aws-credentials@v2
       with:
-        role-to-assume: "arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-actions-role"
+        role-to-assume: "arn:aws:iam::${{ inputs.aws_account_id }}:role/github-actions-role"
         aws-region: us-west-2
 
     - name: Fetch EC2 public IP
