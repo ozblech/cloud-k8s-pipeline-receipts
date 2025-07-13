@@ -49,6 +49,9 @@ runs:
         # Short SHA of current commit
         SHORT_SHA=$(git rev-parse --short HEAD)
 
+        # Short SHA of previous commit
+        PREV_SHORT_SHA=$(git rev-parse --short HEAD~1)
+
         # Strip 'v' prefix
         CLEAN_TAG="${TAG#v}"
         CLEAN_PREV_TAG="${PREV_TAG#v}"
@@ -63,5 +66,5 @@ runs:
         echo "new_version=v${NEW_VERSION}" >> $GITHUB_OUTPUT
 
         # Output previous image tag
-        echo "previous_image_tag=${CLEAN_PREV_TAG}-${SHORT_SHA}" >> $GITHUB_OUTPUT
+        echo "previous_image_tag=${CLEAN_PREV_TAG}-${PREV_SHORT_SHA}" >> $GITHUB_OUTPUT
         echo "previous_version=${PREV_TAG}" >> $GITHUB_OUTPUT
