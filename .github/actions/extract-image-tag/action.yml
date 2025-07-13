@@ -50,7 +50,7 @@ runs:
         SHORT_SHA=$(git rev-parse --short HEAD)
 
         # Short SHA of previous commit
-        PREV_SHORT_SHA=$(git rev-parse --short HEAD~1)
+        PREV_SHORT_SHA=$(git rev-parse --short "$PREV_TAG")
 
         # Strip 'v' prefix
         CLEAN_TAG="${TAG#v}"
