@@ -30,9 +30,6 @@ runs:
         # Strip 'v' prefix to get semver (e.g., 1.0.0)
         VERSION="${LATEST_TAG#v}"
 
-        # Output the current image tag (even if already tagged)
-        echo "current_image_tag=${VERSION}-${SHORT_SHA}" >> "$GITHUB_OUTPUT"
-
         # Check if this commit is already tagged
         EXISTING_TAG=$(git tag --points-at "$CURRENT_SHA" | grep '^v' | head -n 1)
 
