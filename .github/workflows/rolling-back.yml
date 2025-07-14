@@ -58,8 +58,9 @@ jobs:
             DEPLOYMENT_NAME: receipts-api
             REVISION_INPUT: ${{ github.event.inputs.revision }}
             PREVIOUS_IMAGE_TAG: ${{ needs.get-latest-tag.outputs.previous_image_tag }}
+            EC2_PUBLIC_DNS: ${{ steps.fetch-minikube-ec2-ip.outputs.public_dns }}
         run: |
-            ssh -o StrictHostKeyChecking=no -i ec2_key.pem ec2-user@${{ steps.fetch-minikube-ec2-ip.outputs.public_dns }} << EOF
+            ssh -o StrictHostKeyChecking=no -i ec2_key.pem ec2-user@$EC2_PUBLIC_DNS << EOF
             export KUBECONFIG=\$HOME/.kube/config
 
             if [ -z "$REVISION_INPUT" ]; then
@@ -72,4 +73,3 @@ jobs:
 
             kubectl rollout status deployment/$DEPLOYMENT_NAME -n default
             EOF
-            
