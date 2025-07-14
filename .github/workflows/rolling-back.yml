@@ -13,28 +13,75 @@ on:
         default: ''
 
 jobs:
-  get-latest-tag:
-    runs-on: ubuntu-latest
-    outputs:
-      previous_image_tag: ${{ steps.extract-image-tag.outputs.previous_image_tag }}
-    steps:
-      - name: Checkout repository
-        if: ${{ github.event.inputs.revision == '' }}
-        uses: actions/checkout@v4
+#   get-latest-tag:
+#     runs-on: ubuntu-latest
+#     outputs:
+#       previous_image_tag: ${{ steps.extract-image-tag.outputs.previous_image_tag }}
+#     steps:
+#       - name: Checkout repository
+#         if: ${{ github.event.inputs.revision == '' }}
+#         uses: actions/checkout@v4
 
-      - name: Get latest Git tag
-        if: ${{ github.event.inputs.revision == '' }}
-        id: extract-image-tag
-        uses: ./.github/actions/extract-image-tag
+#       - name: Get latest Git tag
+#         if: ${{ github.event.inputs.revision == '' }}
+#         id: extract-image-tag
+#         uses: ./.github/actions/extract-image-tag
 
-      - name: Echo previous image tag
-        if: ${{ github.event.inputs.revision == '' }}
-        run: |
-            echo "Previous image tag: ${{ steps.extract-image-tag.outputs.previous_image_tag }}"   
+#       - name: Echo previous image tag
+#         if: ${{ github.event.inputs.revision == '' }}
+#         run: |
+#             echo "Previous image tag: ${{ steps.extract-image-tag.outputs.previous_image_tag }}"   
+
+#   rollback:
+#     needs: get-latest-tag  # <-- Required to access outputs
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Checkout repository
+#         uses: actions/checkout@v4
+
+#       - name: Setup SSH key
+#         run: |
+#           echo "${{ secrets.EC2_SSH_KEY }}" > ec2_key.pem
+#           chmod 600 ec2_key.pem
+        
+#       - name: Fetch EC2 public IP
+#         id: fetch-minikube-ec2-ip
+#         uses: ./.github/actions/fetch-ec2-public-ip
+#         with:
+#           tag_name: minikube-ec2
+#           aws_account_id: ${{ secrets.AWS_ACCOUNT_ID }}
+        
+#       - name: Print DNS
+#         run: echo "DNS is ${{ steps.fetch-minikube-ec2-ip.outputs.public_dns }}"
+
+#       - name: Rollback via SSH
+#         env:
+#             IMAGE_REPO: ozblech/receipts-api
+#             DEPLOYMENT_NAME: receipts-api
+#             REVISION_INPUT: ${{ github.event.inputs.revision }}
+#             PREVIOUS_IMAGE_TAG: ${{ needs.get-latest-tag.outputs.previous_image_tag }}
+#             EC2_PUBLIC_DNS: ${{ steps.fetch-minikube-ec2-ip.outputs.public_dns }}
+#         run: |
+#             ssh -o StrictHostKeyChecking=no -i ec2_key.pem ec2-user@$EC2_PUBLIC_DNS << EOF
+#             export KUBECONFIG=\$HOME/.kube/config
+
+#             if [ -z "$REVISION_INPUT" ]; then
+#                 echo "Rolling back to previous image tag: $PREVIOUS_IMAGE_TAG"
+#                 kubectl set image deployment/$DEPLOYMENT_NAME receipts=$IMAGE_REPO:$PREVIOUS_IMAGE_TAG -n default
+#             else
+#                 echo "Rolling back to revision: $REVISION_INPUT"
+#                 kubectl rollout undo deployment/$DEPLOYMENT_NAME --to-revision=$REVISION_INPUT -n default
+#             fi
+
+#             kubectl rollout status deployment/$DEPLOYMENT_NAME -n default
+#             EOF
 
   rollback:
-    needs: get-latest-tag  # <-- Required to access outputs
     runs-on: ubuntu-latest
+    env:
+      IMAGE_REPO: ozblech/receipts-api
+      DEPLOYMENT_NAME: receipts-api
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -43,36 +90,46 @@ jobs:
         run: |
           echo "${{ secrets.EC2_SSH_KEY }}" > ec2_key.pem
           chmod 600 ec2_key.pem
-        
+
       - name: Fetch EC2 public IP
         id: fetch-minikube-ec2-ip
         uses: ./.github/actions/fetch-ec2-public-ip
         with:
           tag_name: minikube-ec2
           aws_account_id: ${{ secrets.AWS_ACCOUNT_ID }}
-        
-      - name: Print DNS
-        run: echo "DNS is ${{ steps.fetch-minikube-ec2-ip.outputs.public_dns }}"
 
-      - name: Rollback via SSH
+      - name: Get latest Git tag
+        if: ${{ github.event.inputs.revision == '' }}
+        id: get-latest-tag
+        uses: ./.github/actions/extract-image-tag
+
+      - name: Echo previous image tag
+        if: ${{ github.event.inputs.revision == '' }}
+        run: |
+            echo "Previous image tag: ${{ steps.get-latest-tag.outputs.previous_image_tag }}"   
+
+      - name: Rollback on EC2 via SSH
         env:
-            IMAGE_REPO: ozblech/receipts-api
-            DEPLOYMENT_NAME: receipts-api
             REVISION_INPUT: ${{ github.event.inputs.revision }}
-            PREVIOUS_IMAGE_TAG: ${{ needs.get-latest-tag.outputs.previous_image_tag }}
+            PREVIOUS_IMAGE_TAG: ${{ steps.get-latest-tag.outputs.previous_image_tag }}
             EC2_PUBLIC_DNS: ${{ steps.fetch-minikube-ec2-ip.outputs.public_dns }}
         run: |
-            ssh -o StrictHostKeyChecking=no -i ec2_key.pem ec2-user@$EC2_PUBLIC_DNS << EOF
-            export KUBECONFIG=\$HOME/.kube/config
+          echo "🔧 Connecting to EC2 at $EC2_PUBLIC_DNS"
 
-            if [ -z "$REVISION_INPUT" ]; then
-                echo "Rolling back to previous image tag: $PREVIOUS_IMAGE_TAG"
-                kubectl set image deployment/$DEPLOYMENT_NAME receipts=$IMAGE_REPO:$PREVIOUS_IMAGE_TAG -n default
+          ssh -o StrictHostKeyChecking=no -i ec2_key.pem ec2-user@EC2_PUBLIC_DNS << 'EOF'
+            export KUBECONFIG=\$HOME/.kube/config
+            export DEPLOYMENT_NAME="${{ env.DEPLOYMENT_NAME }}"
+            export IMAGE_REPO="${{ env.IMAGE_REPO }}"
+            export REVISION_INPUT="${{ github.event.inputs.revision }}"
+
+            if [ -z "\$REVISION_INPUT" ]; then
+              echo "Rolling back by updating image to: \$IMAGE_REPO:\$PREVIOUS_IMAGE_TAG"
+              kubectl set image deployment/\$DEPLOYMENT_NAME receipts=\$IMAGE_REPO:\$PREVIOUS_IMAGE_TAG -n default
             else
-                echo "Rolling back to revision: $REVISION_INPUT"
-                kubectl rollout undo deployment/$DEPLOYMENT_NAME --to-revision=$REVISION_INPUT -n default
+              echo "Rolling back to deployment revision: \$REVISION_INPUT"
+              kubectl rollout undo deployment/\$DEPLOYMENT_NAME --to-revision=\$REVISION_INPUT -n default
             fi
 
-            kubectl rollout status deployment/$DEPLOYMENT_NAME -n default
-            EOF
-            
+            echo "✅ Waiting for deployment to finish..."
+            kubectl rollout status deployment/\$DEPLOYMENT_NAME -n default
+          EOF
