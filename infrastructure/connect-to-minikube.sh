@@ -78,9 +78,9 @@ echo "🔍 Testing kubectl access..."
 kubectl get nodes || echo "❌ Failed to connect to Minikube. Check your SSH tunnel and certs."
 
 # Kubectl apply all files in receipts_project/kubernetes
-# echo "🔄 Applying Kubernetes manifests..."
-# kubectl apply -f ../receipts_project/kubernetes/
-# echo "✅ Kubernetes manifests applied successfully."
+echo "🔄 Applying Kubernetes manifests..."
+kubectl apply -f ../receipts_project/kubernetes/
+echo "✅ Kubernetes manifests applied successfully."
 
 # Run this script with: source connect-to-minikube.sh
 # so that the KUBECONFIG variable is set in the current shell session.

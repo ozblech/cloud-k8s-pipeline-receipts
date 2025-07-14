@@ -75,3 +75,4 @@ jobs:
 
             kubectl rollout status deployment/$DEPLOYMENT_NAME -n default
             EOF
+            
