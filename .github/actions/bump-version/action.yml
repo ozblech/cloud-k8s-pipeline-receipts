@@ -16,39 +16,36 @@ runs:
       id: extract
       shell: bash
       run: |
+        # Fetch all tags from remote
         git fetch --tags
 
-        # Short SHA of current commit
+        # Resolve commit SHAs
+        CURRENT_SHA=$(git rev-parse HEAD)
         SHORT_SHA=$(git rev-parse --short HEAD)
 
+        # Get the latest tag starting with 'v' (e.g., v1.0.0)
         LATEST_TAG=$(git tag --sort=-creatordate | grep '^v' | head -n 1)
-
-        # If no tags exist, default
         LATEST_TAG=${LATEST_TAG:-v1.0.0}
 
-        # Strip 'v' prefix
-        CLEAN_TAG="${LATEST_TAG#v}"
+        # Strip 'v' prefix to get semver (e.g., 1.0.0)
+        VERSION="${LATEST_TAG#v}"
 
-        # Create image tag based on current tag + SHA
-        echo "current_image_tag=${CLEAN_TAG}-${SHORT_SHA}" >> $GITHUB_OUTPUT
+        # Output the current image tag (even if already tagged)
+        echo "current_image_tag=${VERSION}-${SHORT_SHA}" >> "$GITHUB_OUTPUT"
 
-        # Check if any tag points to the current commit
-        EXISTING_TAG=$(git tag --points-at "$CURRENT_SHA" | head -n 1)
+        # Check if this commit is already tagged
+        EXISTING_TAG=$(git tag --points-at "$CURRENT_SHA" | grep '^v' | head -n 1)
+
         if [ -n "$EXISTING_TAG" ]; then
-          echo "⚠️ Commit already tagged with: $EXISTING_TAG. Skipping tag creation."
-          echo "new_image_tag=${CLEAN_TAG}-${SHORT_SHA}" >> $GITHUB_OUTPUT
-          echo "new_version=v${CLEAN_TAG}" >> $GITHUB_OUTPUT
-        else         
-          # Bump patch version
-          IFS='.' read -r MAJOR MINOR PATCH <<< "$CLEAN_TAG"
-          NEW_VERSION="$MAJOR.$MINOR.$((PATCH + 1))"
-          echo "new_image_tag=${NEW_VERSION}-${SHORT_SHA}" >> $GITHUB_OUTPUT
-          echo "new_version=v${NEW_VERSION}" >> $GITHUB_OUTPUT
+          echo "⚠️ Commit already has tag: $EXISTING_TAG. Skipping bump."
+          echo "new_image_tag=${VERSION}-${SHORT_SHA}" >> "$GITHUB_OUTPUT"
+          echo "new_version=${LATEST_TAG}" >> "$GITHUB_OUTPUT"
+        else
+          # Parse major.minor.patch
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
+          NEW_VERSION="${MAJOR}.${MINOR}.$((PATCH + 1))"
+          
+          echo "✅ Bumping version to: v${NEW_VERSION}-${SHORT_SHA}"
+          echo "new_image_tag=${NEW_VERSION}-${SHORT_SHA}" >> "$GITHUB_OUTPUT"
+          echo "new_version=v${NEW_VERSION}" >> "$GITHUB_OUTPUT"
         fi
-
-        
-
-
-
-
-        
