@@ -54,27 +54,27 @@ jobs:
 #       - name: Print DNS
 #         run: echo "DNS is ${{ steps.fetch-minikube-ec2-ip.outputs.public_dns }}"
 
-#       - name: Rollback via SSH
-#         env:
-#             IMAGE_REPO: ozblech/receipts-api
-#             DEPLOYMENT_NAME: receipts-api
-#             REVISION_INPUT: ${{ github.event.inputs.revision }}
-#             PREVIOUS_IMAGE_TAG: ${{ needs.get-latest-tag.outputs.previous_image_tag }}
-#             EC2_PUBLIC_DNS: ${{ steps.fetch-minikube-ec2-ip.outputs.public_dns }}
-#         run: |
-#             ssh -o StrictHostKeyChecking=no -i ec2_key.pem ec2-user@$EC2_PUBLIC_DNS << EOF
-#             export KUBECONFIG=\$HOME/.kube/config
+    #   - name: Rollback via SSH
+    #     env:
+    #         IMAGE_REPO: ozblech/receipts-api
+    #         DEPLOYMENT_NAME: receipts-api
+    #         REVISION_INPUT: ${{ github.event.inputs.revision }}
+    #         PREVIOUS_IMAGE_TAG: ${{ needs.get-latest-tag.outputs.previous_image_tag }}
+    #         EC2_PUBLIC_DNS: ${{ steps.fetch-minikube-ec2-ip.outputs.public_dns }}
+    #     run: |
+    #         ssh -o StrictHostKeyChecking=no -i ec2_key.pem ec2-user@$EC2_PUBLIC_DNS << EOF
+    #         export KUBECONFIG=\$HOME/.kube/config
 
-#             if [ -z "$REVISION_INPUT" ]; then
-#                 echo "Rolling back to previous image tag: $PREVIOUS_IMAGE_TAG"
-#                 kubectl set image deployment/$DEPLOYMENT_NAME receipts=$IMAGE_REPO:$PREVIOUS_IMAGE_TAG -n default
-#             else
-#                 echo "Rolling back to revision: $REVISION_INPUT"
-#                 kubectl rollout undo deployment/$DEPLOYMENT_NAME --to-revision=$REVISION_INPUT -n default
-#             fi
+    #         if [ -z "$REVISION_INPUT" ]; then
+    #             echo "Rolling back to previous image tag: $PREVIOUS_IMAGE_TAG"
+    #             kubectl set image deployment/$DEPLOYMENT_NAME receipts=$IMAGE_REPO:$PREVIOUS_IMAGE_TAG -n default
+    #         else
+    #             echo "Rolling back to revision: $REVISION_INPUT"
+    #             kubectl rollout undo deployment/$DEPLOYMENT_NAME --to-revision=$REVISION_INPUT -n default
+    #         fi
 
-#             kubectl rollout status deployment/$DEPLOYMENT_NAME -n default
-#             EOF
+    #         kubectl rollout status deployment/$DEPLOYMENT_NAME -n default
+    #         EOF
 
   rollback:
     runs-on: ubuntu-latest
@@ -114,9 +114,9 @@ jobs:
             PREVIOUS_IMAGE_TAG: ${{ steps.get-latest-tag.outputs.previous_image_tag }}
             EC2_PUBLIC_DNS: ${{ steps.fetch-minikube-ec2-ip.outputs.public_dns }}
         run: |
-          echo "🔧 Connecting to EC2 at $EC2_PUBLIC_DNS"
+            echo "🔧 Connecting to EC2 at $EC2_PUBLIC_DNS"
 
-          ssh -o StrictHostKeyChecking=no -i ec2_key.pem ec2-user@$EC2_PUBLIC_DNS << EOF
+            ssh -o StrictHostKeyChecking=no -i ec2_key.pem ec2-user@$EC2_PUBLIC_DNS << EOF
             export KUBECONFIG=\$HOME/.kube/config
             export DEPLOYMENT_NAME="${{ env.DEPLOYMENT_NAME }}"
             export IMAGE_REPO="${{ env.IMAGE_REPO }}"
@@ -132,4 +132,4 @@ jobs:
 
             echo "✅ Waiting for deployment to finish..."
             kubectl rollout status deployment/\$DEPLOYMENT_NAME -n default
-          EOF
+            EOF
