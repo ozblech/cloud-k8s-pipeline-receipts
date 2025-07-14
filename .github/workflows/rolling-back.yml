@@ -116,7 +116,7 @@ jobs:
         run: |
           echo "🔧 Connecting to EC2 at $EC2_PUBLIC_DNS"
 
-          ssh -o StrictHostKeyChecking=no -i ec2_key.pem ec2-user@EC2_PUBLIC_DNS << 'EOF'
+          ssh -o StrictHostKeyChecking=no -i ec2_key.pem ec2-user@EC2_PUBLIC_DNS << EOF
             export KUBECONFIG=\$HOME/.kube/config
             export DEPLOYMENT_NAME="${{ env.DEPLOYMENT_NAME }}"
             export IMAGE_REPO="${{ env.IMAGE_REPO }}"
