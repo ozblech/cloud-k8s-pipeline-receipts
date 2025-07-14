@@ -16,33 +16,36 @@ runs:
       id: extract
       shell: bash
       run: |
-        # Fetch all tags from remote
+        set -euo pipefail
+
+        echo "🔄 Fetching all tags..."
         git fetch --tags
 
-        # Resolve commit SHAs
+        echo "🔍 Getting current commit SHA..."
         CURRENT_SHA=$(git rev-parse HEAD)
         SHORT_SHA=$(git rev-parse --short HEAD)
 
-        # Get the latest tag starting with 'v' (e.g., v1.0.0)
-        LATEST_TAG=$(git tag --sort=-creatordate | grep '^v' | head -n 1)
+        echo "🔍 Getting latest tag starting with 'v'..."
+        LATEST_TAG=$(git tag --sort=-creatordate | grep '^v' | head -n 1 || true)
         LATEST_TAG=${LATEST_TAG:-v1.0.0}
+        echo "✅ Latest tag: $LATEST_TAG"
 
-        # Strip 'v' prefix to get semver (e.g., 1.0.0)
         VERSION="${LATEST_TAG#v}"
+        echo "ℹ️ Parsed version: $VERSION"
 
-        # Check if this commit is already tagged
-        EXISTING_TAG=$(git tag --points-at "$CURRENT_SHA" | grep '^v' | head -n 1)
+        echo "🔎 Checking if current commit is already tagged..."
+        EXISTING_TAG=$(git tag --points-at "$CURRENT_SHA" | grep '^v' | head -n 1 || true)
 
         if [ -n "$EXISTING_TAG" ]; then
-          echo "⚠️ Commit already has tag: $EXISTING_TAG. Skipping bump."
-          echo "new_image_tag=${VERSION}-${SHORT_SHA}" >> "$GITHUB_OUTPUT"
-          echo "new_version=${LATEST_TAG}" >> "$GITHUB_OUTPUT"
+          echo "⚠️ Commit is already tagged with: $EXISTING_TAG. Skipping version bump."
+          echo "new_image_tag=${VERSION}-${SHORT_SHA}" >> "${GITHUB_OUTPUT}"
+          echo "new_version=${LATEST_TAG}" >> "${GITHUB_OUTPUT}"
         else
-          # Parse major.minor.patch
+          echo "🧮 Bumping patch version..."
           IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
           NEW_VERSION="${MAJOR}.${MINOR}.$((PATCH + 1))"
-          
-          echo "✅ Bumping version to: v${NEW_VERSION}-${SHORT_SHA}"
-          echo "new_image_tag=${NEW_VERSION}-${SHORT_SHA}" >> "$GITHUB_OUTPUT"
-          echo "new_version=v${NEW_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "✅ New version: v${NEW_VERSION}"
+
+          echo "new_image_tag=${NEW_VERSION}-${SHORT_SHA}" >> "${GITHUB_OUTPUT}"
+          echo "new_version=v${NEW_VERSION}" >> "${GITHUB_OUTPUT}"
         fi
