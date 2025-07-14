@@ -108,28 +108,51 @@ jobs:
         run: |
             echo "Previous image tag: ${{ steps.get-latest-tag.outputs.previous_image_tag }}"   
 
-      - name: Rollback on EC2 via SSH
+        
+
+      - name: Rollback via SSH
         env:
             REVISION_INPUT: ${{ github.event.inputs.revision }}
             PREVIOUS_IMAGE_TAG: ${{ steps.get-latest-tag.outputs.previous_image_tag }}
+            EC2_PUBLIC_DNS: ${{ steps.fetch-minikube-ec2-ip.outputs.public_dns }}
         run: |
-            EC2_PUBLIC_DNS=${{ steps.fetch-minikube-ec2-ip.outputs.public_dns }}
-            echo "🔧 Connecting to EC2 at $EC2_PUBLIC_DNS"
-
             ssh -o StrictHostKeyChecking=no -i ec2_key.pem ec2-user@$EC2_PUBLIC_DNS << EOF
             export KUBECONFIG=\$HOME/.kube/config
-            export DEPLOYMENT_NAME="${{ env.DEPLOYMENT_NAME }}"
-            export IMAGE_REPO="${{ env.IMAGE_REPO }}"
-            export REVISION_INPUT="${{ github.event.inputs.revision }}"
 
-            if [ -z "\$REVISION_INPUT" ]; then
-              echo "Rolling back by updating image to: \$IMAGE_REPO:\$PREVIOUS_IMAGE_TAG"
-              kubectl set image deployment/\$DEPLOYMENT_NAME receipts=\$IMAGE_REPO:\$PREVIOUS_IMAGE_TAG -n default
+            if [ -z "$REVISION_INPUT" ]; then
+                echo "Rolling back to previous image tag: $PREVIOUS_IMAGE_TAG"
+                kubectl set image deployment/$DEPLOYMENT_NAME receipts=$IMAGE_REPO:$PREVIOUS_IMAGE_TAG -n default
             else
-              echo "Rolling back to deployment revision: \$REVISION_INPUT"
-              kubectl rollout undo deployment/\$DEPLOYMENT_NAME --to-revision=\$REVISION_INPUT -n default
+                echo "Rolling back to revision: $REVISION_INPUT"
+                kubectl rollout undo deployment/$DEPLOYMENT_NAME --to-revision=$REVISION_INPUT -n default
             fi
 
-            echo "✅ Waiting for deployment to finish..."
-            kubectl rollout status deployment/\$DEPLOYMENT_NAME -n default
+            kubectl rollout status deployment/$DEPLOYMENT_NAME -n default
             EOF
+
+
+    #   - name: Rollback on EC2 via SSH
+    #     env:
+    #         REVISION_INPUT: ${{ github.event.inputs.revision }}
+    #         PREVIOUS_IMAGE_TAG: ${{ steps.get-latest-tag.outputs.previous_image_tag }}
+    #     run: |
+    #         EC2_PUBLIC_DNS=${{ steps.fetch-minikube-ec2-ip.outputs.public_dns }}
+    #         echo "🔧 Connecting to EC2 at $EC2_PUBLIC_DNS"
+
+    #         ssh -o StrictHostKeyChecking=no -i ec2_key.pem ec2-user@$EC2_PUBLIC_DNS << EOF
+    #         export KUBECONFIG=\$HOME/.kube/config
+    #         export DEPLOYMENT_NAME="${{ env.DEPLOYMENT_NAME }}"
+    #         export IMAGE_REPO="${{ env.IMAGE_REPO }}"
+    #         export REVISION_INPUT="${{ github.event.inputs.revision }}"
+
+    #         if [ -z "\$REVISION_INPUT" ]; then
+    #           echo "Rolling back by updating image to: \$IMAGE_REPO:\$PREVIOUS_IMAGE_TAG"
+    #           kubectl set image deployment/\$DEPLOYMENT_NAME receipts=\$IMAGE_REPO:\$PREVIOUS_IMAGE_TAG -n default
+    #         else
+    #           echo "Rolling back to deployment revision: \$REVISION_INPUT"
+    #           kubectl rollout undo deployment/\$DEPLOYMENT_NAME --to-revision=\$REVISION_INPUT -n default
+    #         fi
+
+    #         echo "✅ Waiting for deployment to finish..."
+    #         kubectl rollout status deployment/\$DEPLOYMENT_NAME -n default
+    #         EOF
