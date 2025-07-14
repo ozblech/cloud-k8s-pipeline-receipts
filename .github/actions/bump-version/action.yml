@@ -18,13 +18,13 @@ runs:
       run: |
         git fetch --tags
 
+        # Short SHA of current commit
+        SHORT_SHA=$(git rev-parse --short HEAD)
+
         LATEST_TAG=$(git tag --sort=-creatordate | grep '^v' | head -n 1)
 
         # If no tags exist, default
         LATEST_TAG=${LATEST_TAG:-v1.0.0}
-
-        # Short SHA of current commit
-        SHORT_SHA=$(git rev-parse --short HEAD)
 
         # Strip 'v' prefix
         CLEAN_TAG="${LATEST_TAG#v}"
@@ -32,9 +32,23 @@ runs:
         # Create image tag based on current tag + SHA
         echo "current_image_tag=${CLEAN_TAG}-${SHORT_SHA}" >> $GITHUB_OUTPUT
 
-        # Bump patch version
-        IFS='.' read -r MAJOR MINOR PATCH <<< "$CLEAN_TAG"
-        NEW_VERSION="$MAJOR.$MINOR.$((PATCH + 1))"
+        # Check if any tag points to the current commit
+        EXISTING_TAG=$(git tag --points-at "$CURRENT_SHA" | head -n 1)
+        if [ -n "$EXISTING_TAG" ]; then
+          echo "⚠️ Commit already tagged with: $EXISTING_TAG. Skipping tag creation."
+          echo "new_image_tag=${CLEAN_TAG}-${SHORT_SHA}" >> $GITHUB_OUTPUT
+          echo "new_version=v${CLEAN_TAG}" >> $GITHUB_OUTPUT
+        else         
+          # Bump patch version
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$CLEAN_TAG"
+          NEW_VERSION="$MAJOR.$MINOR.$((PATCH + 1))"
+          echo "new_image_tag=${NEW_VERSION}-${SHORT_SHA}" >> $GITHUB_OUTPUT
+          echo "new_version=v${NEW_VERSION}" >> $GITHUB_OUTPUT
+        fi
 
-        echo "new_image_tag=${NEW_VERSION}-${SHORT_SHA}" >> $GITHUB_OUTPUT
-        echo "new_version=v${NEW_VERSION}" >> $GITHUB_OUTPUT
+        
+
+
+
+
+        
