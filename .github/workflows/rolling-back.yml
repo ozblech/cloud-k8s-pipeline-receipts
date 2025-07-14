@@ -112,8 +112,8 @@ jobs:
         env:
             REVISION_INPUT: ${{ github.event.inputs.revision }}
             PREVIOUS_IMAGE_TAG: ${{ steps.get-latest-tag.outputs.previous_image_tag }}
-            EC2_PUBLIC_DNS: ${{ steps.fetch-minikube-ec2-ip.outputs.public_dns }}
         run: |
+            EC2_PUBLIC_DNS=${{ steps.fetch-minikube-ec2-ip.outputs.public_dns }}
             echo "🔧 Connecting to EC2 at $EC2_PUBLIC_DNS"
 
             ssh -o StrictHostKeyChecking=no -i ec2_key.pem ec2-user@$EC2_PUBLIC_DNS << EOF
