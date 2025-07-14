@@ -2,15 +2,12 @@ name: Extract Image Tag
 description: "Generates Docker image tag from latest Git tag and short SHA"
 
 outputs:
-  new_image_tag:
-    description: "Generated image tag (e.g., 1.0.15-a1b2c3d)"
-    value: ${{ steps.extract.outputs.new_image_tag }}
-  new_version:
-    description: "Next version in X.Y.Z format (e.g., 1.0.15)"
-    value: ${{ steps.extract.outputs.new_version }}
   current_image_tag:
     description: "Current image tag without 'v' prefix (e.g., 1.0.14-a1b2c3d)"
     value: ${{ steps.extract.outputs.current_image_tag }}
+  current_version:
+    description: "Current version with 'v' prefix (e.g., v1.0.14)"
+    value: ${{ steps.extract.outputs.current_version }}
   previous_image_tag:
     description: "Previous image tag (e.g., 1.0.13-a1b2c3d)"
     value: ${{ steps.extract.outputs.previous_image_tag }}
@@ -24,16 +21,6 @@ runs:
     - name: Extract Git tag and SHA
       id: extract
       shell: bash
-      # run: |
-      #   git fetch --tags
-      #   TAG=$(git describe --tags $(git rev-list --tags --max-count=1) 2>/dev/null || echo "v1.0.0")
-      #   SHORT_SHA=$(git rev-parse --short HEAD)
-      #   CLEAN_TAG="${TAG#v}"
-      #   echo "current_image_tag=${CLEAN_TAG}-${SHORT_SHA}" >> $GITHUB_OUTPUT
-      #   IFS='.' read -r MAJOR MINOR PATCH <<< "$CLEAN_TAG"
-      #   NEW_VERSION="$MAJOR.$MINOR.$((PATCH + 1))"
-      #   echo "new_image_tag=${NEW_VERSION}-${SHORT_SHA}" >> $GITHUB_OUTPUT
-      #   echo "new_version=v${NEW_VERSION}" >> $GITHUB_OUTPUT
       run: |
         git fetch --tags
 
@@ -56,14 +43,9 @@ runs:
         CLEAN_TAG="${TAG#v}"
         CLEAN_PREV_TAG="${PREV_TAG#v}"
 
-        # Create image tag based on current tag + SHA
+        # Create current image tag based on current tag + SHA
         echo "current_image_tag=${CLEAN_TAG}-${SHORT_SHA}" >> $GITHUB_OUTPUT
-
-        # Bump patch version
-        IFS='.' read -r MAJOR MINOR PATCH <<< "$CLEAN_TAG"
-        NEW_VERSION="$MAJOR.$MINOR.$((PATCH + 1))"
-        echo "new_image_tag=${NEW_VERSION}-${SHORT_SHA}" >> $GITHUB_OUTPUT
-        echo "new_version=v${NEW_VERSION}" >> $GITHUB_OUTPUT
+        echo "current_version=v${CLEAN_TAG}" >> $GITHUB_OUTPUT
 
         # Output previous image tag
         echo "previous_image_tag=${CLEAN_PREV_TAG}-${PREV_SHORT_SHA}" >> $GITHUB_OUTPUT
