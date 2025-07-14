@@ -15,18 +15,20 @@ on:
 jobs:
   get-latest-tag:
     runs-on: ubuntu-latest
-    if: ${{ !github.event.inputs.revision }}
     outputs:
       previous_image_tag: ${{ steps.extract-image-tag.outputs.previous_image_tag }}
     steps:
       - name: Checkout repository
+        if: ${{ github.event.inputs.revision == '' }}
         uses: actions/checkout@v4
 
       - name: Get latest Git tag
+        if: ${{ github.event.inputs.revision == '' }}
         id: extract-image-tag
         uses: ./.github/actions/extract-image-tag
 
       - name: Echo previous image tag
+        if: ${{ github.event.inputs.revision == '' }}
         run: |
             echo "Previous image tag: ${{ steps.extract-image-tag.outputs.previous_image_tag }}"   
 
