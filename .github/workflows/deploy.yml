@@ -66,9 +66,9 @@ jobs:
 
             # Set the image in the deployment using Helm
             helm upgrade $DEPLOYMENT_NAME ./receipts_project/helm_chart \
-              --install \
-              --namespace default \
-              --set image =$IMAGE_REPO:$IMAGE_TAG \
+            --install \
+            --namespace default \
+            --set image.repository=$IMAGE_REPO,image.tag=$IMAGE_TAG
 
             # Verify rollout status
             kubectl rollout status deployment/$DEPLOYMENT_NAME -n default
