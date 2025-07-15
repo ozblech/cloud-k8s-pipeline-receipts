@@ -21,52 +21,56 @@ spec:
           env:
             - name: DB_CONNECTION_STRING
               valueFrom:
-                configMapKeyRef:
-                  name: receipts-config
+                secretKeyRef:
+                  name: receipts-secrets
                   key: DB_CONNECTION_STRING
             - name: DB_USER
               valueFrom:
                 secretKeyRef:
-                  name: postgres-credentials
+                  name: receipts-secrets
                   key: DB_USER
             - name: DB_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: postgres-credentials
+                  name: receipts-secrets
                   key: DB_PASSWORD
             - name: S3_BUCKET_NAME
               valueFrom:
-                configMapKeyRef:
-                  name: receipts-config
+                secretKeyRef:
+                  name: receipts-secrets
                   key: S3_BUCKET_NAME
             - name: S3_REGION
               valueFrom:
-                configMapKeyRef:
-                  name: receipts-config
-                  key: S3_REGION
+                secretKeyRef:
+                  name: receipts-secrets
+                  key: S3_REGION  
             - name: AWS_ACCESS_KEY_ID
               valueFrom:
                 secretKeyRef:
-                  name: aws-credentials
+                  name: receipts-secrets
                   key: AWS_ACCESS_KEY_ID
             - name: AWS_SECRET_ACCESS_KEY
               valueFrom:
                 secretKeyRef:
-                  name: aws-credentials
-                  key: AWS_SECRET_ACCESS_KEY
-            
-          readinessProbe:
-            httpGet:
-              path: /health
-              port: 3000
-            initialDelaySeconds: 20
-            periodSeconds: 10
-            failureThreshold: 3
-
+                  name: receipts-secrets
+                  key: AWS_SECRET_ACCESS_KEY         
           livenessProbe:
             httpGet:
               path: /health
-              port: 3000
-            initialDelaySeconds: 15
-            periodSeconds: 20
+              port: {{ .Values.image.containerPort }}
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            timeoutSeconds: 3
             failureThreshold: 5
+            successThreshold: 1
+
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: {{ .Values.image.containerPort }}
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 3
+            successThreshold: 1
+

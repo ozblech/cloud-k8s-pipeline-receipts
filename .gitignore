@@ -21,6 +21,7 @@ infrastructure/minikube-ec2/*
 receipts_project/kubernetes/aws-credentials-secret.yaml
 receipts_project/kubernetes/postgres-secret.yaml
 receipts_project/kubernetes/secrets.yaml
+receipts_project/helm_chart/values-secret.yaml
 
 # Ignore instruction files
 receipts_project/kubernetes/instructions*
