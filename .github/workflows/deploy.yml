@@ -53,6 +53,9 @@ jobs:
           DEPLOYMENT_NAME: receipts-api
           EC2_PUBLIC_DNS: ${{ steps.fetch-minikube-ec2-ip.outputs.public_dns }}
         run: |
+          # Copy Helm chart to EC2 instance 
+          scp -i ec2_key.pem -r ./receipts_project/helm_chart ec2-user@$EC2_PUBLIC_DNS:~/receipts_project/
+
           ssh -o StrictHostKeyChecking=no -i ec2_key.pem ec2-user@$EC2_PUBLIC_DNS << EOF
             echo "🚀 Deploying image: $IMAGE_REPO:$IMAGE_TAG"
 
@@ -61,10 +64,10 @@ jobs:
 
             # Set new image in the deployment
             # kubectl set image deployment/$DEPLOYMENT_NAME \
-            #   receipts=$IMAGE_REPO:$IMAGE_TAG \
+            #   receipts-api=$IMAGE_REPO:$IMAGE_TAG \
             #   -n default
 
-            # Set the image in the deployment using Helm
+            # Set the image in the deployment using Helm          
             helm upgrade $DEPLOYMENT_NAME ./receipts_project/helm_chart \
             --install \
             --namespace default \
