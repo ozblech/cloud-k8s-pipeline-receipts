@@ -54,7 +54,8 @@ jobs:
           EC2_PUBLIC_DNS: ${{ steps.fetch-minikube-ec2-ip.outputs.public_dns }}
         run: |
           # Copy Helm chart to EC2 instance 
-          scp -i ec2_key.pem -r ./receipts_project/helm_chart ec2-user@$EC2_PUBLIC_DNS:~/receipts_project/
+          scp -o StrictHostKeyChecking=no -i ec2_key.pem -r ./receipts_project/helm_chart ec2-user@$EC2_PUBLIC_DNS:~/receipts_project/
+
 
           ssh -o StrictHostKeyChecking=no -i ec2_key.pem ec2-user@$EC2_PUBLIC_DNS << EOF
             echo "🚀 Deploying image: $IMAGE_REPO:$IMAGE_TAG"
