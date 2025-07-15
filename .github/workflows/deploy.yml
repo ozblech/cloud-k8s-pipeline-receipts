@@ -67,9 +67,8 @@ jobs:
             #   receipts-api=$IMAGE_REPO:$IMAGE_TAG \
             #   -n default
 
-            # Set the image in the deployment using Helm
-            
-            # helm upgrade $DEPLOYMENT_NAME ./receipts_project/helm_chart \
+            # Set the image in the deployment using Helm          
+            helm upgrade $DEPLOYMENT_NAME ./receipts_project/helm_chart \
             --install \
             --namespace default \
             --set image.repository=$IMAGE_REPO,image.tag=$IMAGE_TAG
