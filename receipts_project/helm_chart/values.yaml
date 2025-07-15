@@ -5,18 +5,22 @@
 # This will set the replicaset count more information can be found here: https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/
 replicaCount: 1
 
-appName: "receipts-app"
+appName: "receipts-api"
 
 # This sets the container image more information can be found here: https://kubernetes.io/docs/concepts/containers/images/
 image:
     repository: ozblech/receipts-api
-    tag: 1.0.2-9e9201d
+    tag: 1.0.31-74f6e36
     pullPolicy: Always
     containerPort: 5000
 
 
 service:
-    port: 3000
+    port: 5000
+    targetPort: 5000
+    type: NodePort
+    nodePort: 30007
+
 
 
 
