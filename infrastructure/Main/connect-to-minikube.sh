@@ -8,7 +8,14 @@ ABS_DIR=$(realpath "$LOCAL_DIR")
 CONFIG_FILE_NAME="minikube-ec2-config"
 CONFIG_FILE_PATH="$ABS_DIR/$CONFIG_FILE_NAME"
 
+# If EC2_IP is empty, exit with an error
+if [ -z "$EC2_IP" ]; then
+  echo "❌ Error: EC2 IP address is not set. Please run 'terraform apply' first."
+  exit 1
+fi
+
 echo "⏳ Waiting for Minikube to be ready on EC2..."
+echo "🔗 Connecting to EC2 instance: $EC2_USER@$EC2_IP"
 
 ssh-keyscan -H "$EC2_IP" >> ~/.ssh/known_hosts
 
