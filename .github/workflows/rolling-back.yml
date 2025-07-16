@@ -1,7 +1,7 @@
 name: CD - Rollback Deployment
 
 permissions:
-  id-token: write
+  id-token: write # Required for OIDC
   contents: read
 
 on:
@@ -44,8 +44,6 @@ jobs:
         if: ${{ github.event.inputs.revision == '' }}
         run: |
             echo "Previous image tag: ${{ steps.get-latest-tag.outputs.previous_image_tag }}"   
-
-        
 
       - name: Rollback via SSH
         env:

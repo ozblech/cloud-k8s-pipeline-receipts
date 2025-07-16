@@ -12,7 +12,7 @@
 *.log
 
 # Ignore all files inside minikube-ec2 directory
-infrastructure/minikube-ec2/*
+infrastructure/Main/minikube-ec2/*
 
 # ignore .env file
 .env
@@ -25,4 +25,7 @@ receipts_project/helm_chart/values-secret.yaml
 
 # Ignore instruction files
 receipts_project/kubernetes/instructions*
+
+# Ignore __pycache__ directories
+**/__pycache__/
 
