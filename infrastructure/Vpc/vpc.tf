@@ -30,20 +30,33 @@ resource "aws_internet_gateway" "my_igw" {
     vpc_id = aws_vpc.my_vpc.id
 }
 
-# Public Route Table
+// Route table
 resource "aws_route_table" "public_rt" {
-  vpc_id = aws_vpc.my_vpc.id
-  route {
-    cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.my_igw.id
-  }
-  tags = { Name = "${var.vpc_name}-public-rt" }
+    vpc_id = aws_vpc.my_vpc.id
+
+    route {
+        cidr_block = "0.0.0.0/0"
+        gateway_id = aws_internet_gateway.my_igw.id
+    }
+    tags = {
+        Name: "my-route-table"
+    }
+
 }
 
-# Private Route Table (no IGW)
+// Route table for private subnets
+// This route table will be used for private subnets to route traffic through the NAT gateway
 resource "aws_route_table" "private_rt" {
   vpc_id = aws_vpc.my_vpc.id
-  tags = { Name = "${var.vpc_name}-private-rt" }
+
+  route {
+    cidr_block     = "0.0.0.0/0"
+    nat_gateway_id = aws_nat_gateway.nat_gw.id
+  }
+
+  tags = {
+    Name = "private-route-table"
+  }
 }
 
 // Routing association
@@ -57,5 +70,25 @@ resource "aws_route_table_association" "private" {
   for_each       = { for idx, subnet in aws_subnet.private_subnets : idx => subnet.id }
   subnet_id      = each.value
   route_table_id = aws_route_table.private_rt.id
+}
+
+// NAT Gateway
+resource "aws_nat_gateway" "nat_gw" {
+  allocation_id = aws_eip.nat_eip.id
+  subnet_id     = aws_subnet.public_subnets[0].id // Use the first public subnet for the NAT gateway
+
+  tags = {
+    Name = "nat-gateway"
+  }
+
+  depends_on = [aws_internet_gateway.my_igw] // Ensure the internet gateway is created before the NAT gateway
+}
+
+// Allocate an Elastic IP for the NAT Gateway
+resource "aws_eip" "nat_eip" {
+  vpc = true
+  tags = {
+    Name = "nat-eip"
+  }
 }
 
