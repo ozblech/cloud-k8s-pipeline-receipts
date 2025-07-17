@@ -12,7 +12,10 @@ inputs:
 outputs:
   public_dns:
     description: "Public DNS name of the EC2 instance using OIDC authentication"
-    value: ${{ steps.fetch-ec2-ip.outputs.public_dns }}
+    value: ${{ steps.fetch-ec2-ip-and-instance-id.outputs.public_dns }}
+  instance_id:
+    description: "Instance ID of the EC2 instance"
+    value: ${{ steps.fetch-ec2-ip-and-instance-id.outputs.instance_id }}
 
 runs:
   using: "composite"
@@ -26,8 +29,8 @@ runs:
         role-to-assume: "arn:aws:iam::${{ inputs.aws_account_id }}:role/github-actions-role"
         aws-region: us-west-2
 
-    - name: Fetch EC2 public IP
-      id: fetch-ec2-ip
+    - name: Fetch EC2 public IP and instance ID
+      id: fetch-ec2-ip-and-instance-id
       shell: bash
       run: |
           dns=$(aws ec2 describe-instances \
@@ -37,4 +40,12 @@ runs:
             --output text)
           echo "public_dns=$dns"
           echo "public_dns=$dns" >> "$GITHUB_OUTPUT"
+          
+          id=$(aws ec2 describe-instances \
+          --filters "Name=tag:Name,Values=${{ inputs.tag_name }}" \
+                    "Name=instance-state-name,Values=running" \
+          --query "Reservations[0].Instances[0].InstanceId" \
+          --output text)
+          echo "instance_id=$id"
+          echo "instance_id=$id" >> "$GITHUB_OUTPUT"
           
