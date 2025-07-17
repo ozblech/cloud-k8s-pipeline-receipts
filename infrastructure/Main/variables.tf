@@ -46,6 +46,12 @@ variable "s3_bucket_name" {
   type        = string
 }
 
+variable "s3_backend_bucket_name" {
+  description = "Name of the S3 bucket for storing Terraform state"
+  type        = string
+  default     = "my-terraform-state-bucket-receipts-app-oz"
+}
+
 variable "postgres_ec2_private_ip" {
   description = "Private IP address of the PostgreSQL EC2 instance"
   type        = string

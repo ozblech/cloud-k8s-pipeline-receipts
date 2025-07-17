@@ -10,32 +10,13 @@ resource "aws_security_group" "postgres_sg" {
     }
 
     ingress {
-        description = "SSH access"
-        from_port   = 22
-        to_port     = 22
-        protocol    = "tcp"
-        cidr_blocks = [var.my_ip] // My IP
-    }
-
-
-    ingress {
         from_port   = 5432
         to_port     = 5432
         protocol    = "tcp"
         security_groups = [aws_security_group.minikube_sg.id] 
-        //cidr_blocks = allow only from private subnets??
-        //cidr_blocks = ["0.0.0.0/0"]
     }
 
-    // To test from my machine
-    # ingress {
-    #     from_port   = 5432
-    #     to_port     = 5432
-    #     protocol    = "tcp"
-    #     cidr_blocks = [var.my_ip] // My IP
-    # }
-
-    // Only allows outbound HTTPS traffic (TCP 443).
+    // Only allows outbound HTTPS traffic (TCP 443). If your setup_postgres.sh only needs to download packages or files over HTTPS, this is all you need.
     egress { 
         from_port   = 443
         to_port     = 443
@@ -75,14 +56,6 @@ resource "aws_security_group" "minikube_sg" {
     protocol    = "tcp"
     cidr_blocks = [var.my_ip] // My IP
     }
-
-    # ingress {
-    #     description = "Node-port access"
-    #     from_port   = 30007
-    #     to_port     = 30007
-    #     protocol    = "tcp"
-    #     cidr_blocks =[var.my_ip] // My IP
-    # }
 
     egress {
         from_port   = 0

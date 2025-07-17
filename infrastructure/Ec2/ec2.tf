@@ -27,7 +27,7 @@ resource "aws_instance" "minikube_ec2" {
   vpc_security_group_ids      = [var.minikube_sg_id]
   key_name                    = aws_key_pair.ssh-key.key_name # For SSH access
   iam_instance_profile        = var.minikube_profile
-  associate_public_ip_address = true // for ssh
+  associate_public_ip_address = true // for installing packages 
 
   tags = {
     Name = "minikube-ec2"
