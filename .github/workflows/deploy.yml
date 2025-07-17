@@ -67,55 +67,77 @@ jobs:
       #       kubectl rollout status deployment/$DEPLOYMENT_NAME -n default
       #     EOF
 
-      - name: Update Deployment Image via SSM
-        env:
-            IMAGE_TAG: ${{ steps.extract-image-tag.outputs.current_image_tag }}
-            IMAGE_REPO: ozblech/receipts-api
-            DEPLOYMENT_NAME: receipts-api
-            INSTANCE_ID: ${{ steps.fetch-minikube-ec2-ip.outputs.instance_id }}
+      # - name: Update Deployment Image via SSM
+      #   env:
+      #       IMAGE_TAG: ${{ steps.extract-image-tag.outputs.current_image_tag }}
+      #       IMAGE_REPO: ozblech/receipts-api
+      #       DEPLOYMENT_NAME: receipts-api
+      #       INSTANCE_ID: ${{ steps.fetch-minikube-ec2-ip.outputs.instance_id }}
+      #   run: |
+      #     COMMAND_ID=$(aws ssm send-command \
+      #     --document-name "AWS-RunShellScript" \
+      #     --instance-ids "$INSTANCE_ID" \
+      #     --comment "Deploy new image to Minikube" \
+      #     --parameters '{
+      #       "commands": [
+      #         "echo ===============================================",
+      #         "echo 🚀 Starting deployment of new image...",
+      #         "echo ===============================================",
+      #         "echo 🧪 Verifying environment...",
+      #         "whoami",
+      #         "pwd",
+      #         "echo $HOME",
+      #         "ls -la $HOME/.kube",
+      #         "export KUBECONFIG=$HOME/.kube/config",
+      #         "echo ✅ KUBECONFIG is set to: $KUBECONFIG",
+      #         "echo 🧠 Current kubectl context:",
+      #         "kubectl config current-context || echo ❌ Failed to get current context",
+      #         "echo 🔍 Checking cluster nodes:",
+      #         "kubectl get nodes || echo ❌ Failed to get nodes",
+      #         "echo 🔍 Existing pods before update:",
+      #         "kubectl get pods -n default || echo ❌ Failed to get pods",
+      #         "echo 🔄 Deploying image: ozblech/receipts-api:1.0.40-98892a0",
+      #         "kubectl set image deployment/receipts-api receipts-api=ozblech/receipts-api:1.0.40-98892a0 || echo ❌ Failed to update image",
+      #         "echo 🔁 Waiting for rollout to complete...",
+      #         "kubectl rollout status deployment/receipts-api -n default || echo ❌ Rollout status check failed",
+      #         "echo ✅ Deployment complete. Checking pods again...",
+      #         "kubectl get pods -n default",
+      #         "echo ===============================================",
+      #         "echo 🎉 Deployment script finished!",
+      #         "echo ==============================================="
+      #       ]
+      #     }' \
+      #     --timeout-seconds 600 \
+      #     --region us-west-2)
+          
+      #     # Wait a few seconds or add a loop to poll until it's done
+      #     sleep 10
+
+      #     # Fetch and print the output
+      #     aws ssm get-command-invocation \
+      #       --command-id "$COMMAND_ID" \
+      #       --instance-id "i-00ea5ce5ca5248a02" \
+      #       --output text \
+      #       --query "StandardOutputContent"
+
+      - name: Deploy via SSM
         run: |
           COMMAND_ID=$(aws ssm send-command \
-          --document-name "AWS-RunShellScript" \
-          --instance-ids "$INSTANCE_ID" \
-          --comment "Deploy new image to Minikube" \
-          --parameters '{
-            "commands": [
-              "echo ===============================================",
-              "echo 🚀 Starting deployment of new image...",
-              "echo ===============================================",
-              "echo 🧪 Verifying environment...",
-              "whoami",
-              "pwd",
-              "echo $HOME",
-              "ls -la $HOME/.kube",
-              "export KUBECONFIG=$HOME/.kube/config",
-              "echo ✅ KUBECONFIG is set to: $KUBECONFIG",
-              "echo 🧠 Current kubectl context:",
-              "kubectl config current-context || echo ❌ Failed to get current context",
-              "echo 🔍 Checking cluster nodes:",
-              "kubectl get nodes || echo ❌ Failed to get nodes",
-              "echo 🔍 Existing pods before update:",
-              "kubectl get pods -n default || echo ❌ Failed to get pods",
-              "echo 🔄 Deploying image: ozblech/receipts-api:1.0.40-98892a0",
-              "kubectl set image deployment/receipts-api receipts-api=ozblech/receipts-api:1.0.40-98892a0 || echo ❌ Failed to update image",
-              "echo 🔁 Waiting for rollout to complete...",
-              "kubectl rollout status deployment/receipts-api -n default || echo ❌ Rollout status check failed",
-              "echo ✅ Deployment complete. Checking pods again...",
-              "kubectl get pods -n default",
-              "echo ===============================================",
-              "echo 🎉 Deployment script finished!",
-              "echo ==============================================="
-            ]
-          }' \
-          --timeout-seconds 600 \
-          --region us-west-2)
+            --document-name "AWS-RunShellScript" \
+            --instance-ids "i-00ea5ce5ca5248a02" \
+            --comment "Deploy new image to Minikube" \
+            --parameters 'commands=["kubectl get pods -n default"]' \
+            --query "Command.CommandId" \
+            --output text)
+
+          echo "SSM command started: $COMMAND_ID"
           
-          # Wait a few seconds or add a loop to poll until it's done
+          # Wait until it finishes (optional simple sleep)
           sleep 10
 
-          # Fetch and print the output
+          # Fetch and print output
           aws ssm get-command-invocation \
             --command-id "$COMMAND_ID" \
             --instance-id "i-00ea5ce5ca5248a02" \
-            --output text \
-            --query "StandardOutputContent"
+            --query "StandardOutputContent" \
+            --output text
