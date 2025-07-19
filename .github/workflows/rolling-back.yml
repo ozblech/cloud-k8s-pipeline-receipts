@@ -107,7 +107,6 @@ jobs:
           #!/bin/bash
           echo "REVISION_INPUT is: $REVISION_INPUT"
           echo "PREVIOUS_IMAGE_TAG is: $PREVIOUS_IMAGE_TAG"
-          export KUBECONFIG=/home/ec2-user/.kube/config
           if [ -z "${REVISION_INPUT}" ]; then
             echo "Rolling back to previous image tag: ${PREVIOUS_IMAGE_TAG}"
             kubectl set image deployment/${DEPLOYMENT_NAME} receipts-api=${IMAGE_REPO}:${PREVIOUS_IMAGE_TAG} -n default
