@@ -75,7 +75,7 @@ jobs:
         run: |
           COMMANDS_JSON=$(jq -n --arg image_tag "$IMAGE_TAG" '[
             "export KUBECONFIG=/home/ec2-user/.kube/config",
-            "kubectl set image deployment/$DEPLOYMENT_NAME $DEPLOYMENT_NAME=ozblech/$DEPLOYMENT_NAME:\($image_tag)"
+            "kubectl set image deployment/${{ env.DEPLOYMENT_NAME }} ${{ env.DEPLOYMENT_NAME }}=ozblech/${{ env.DEPLOYMENT_NAME }}:\($IMAGE_TAG)"
           ]')
           
           echo "$COMMANDS_JSON" > deploy-commands.json
