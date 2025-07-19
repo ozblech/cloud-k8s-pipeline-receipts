@@ -12,7 +12,7 @@
 *.log
 
 # Ignore all files inside minikube-ec2 directory
-infrastructure/Main/minikube-ec2/*
+infrastructure/main/minikube-ec2/*
 
 # ignore .env file
 .env
