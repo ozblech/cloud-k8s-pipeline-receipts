@@ -25,19 +25,45 @@ runs:
         aws-region: us-west-2
 
     - name: Run command on EC2 instance
+      shell: bash
       run: |
-        aws ssm send-command \
+        COMMAND_ID=$(aws ssm send-command \
           --instance-ids ${{ inputs.instance_id }} \
           --document-name "AWS-RunShellScript" \
           --comment "Running command on EC2 instance" \
           --parameters "$(jq -nc --argjson cmds '${{ inputs.commands }}' '{commands: $cmds}')" \
-          --output text
-      shell: bash
+          --output text)
 
-    - name: Output command execution result
-      run: |
-        aws ssm list-command-invocations \
-        --command-id "56241ae5-cb86-475d-abbc-9f52bc467323" \
-        --details
+          echo "COMMAND_ID=$COMMAND_ID" >> $GITHUB_ENV
+
+    - name: Wait for command result and fetch output
+      id: get-output
       shell: bash
+      run: |
+        # Wait until the command finishes
+        for i in {1..30}; do
+          STATUS=$(aws ssm list-command-invocations \
+            --command-id "$COMMAND_ID" \
+            --details \
+            --query "CommandInvocations[0].Status" \
+            --output text)
+
+          echo "Status: $STATUS"
+          if [[ "$STATUS" == "Success" || "$STATUS" == "Failed" || "$STATUS" == "Cancelled" || "$STATUS" == "TimedOut" ]]; then
+            break
+          fi
+          sleep 5
+        done
+
+        # Fetch command output
+        OUTPUT=$(aws ssm list-command-invocations \
+          --command-id "$COMMAND_ID" \
+          --details \
+          --query "CommandInvocations[0].CommandPlugins[0].Output" \
+          --output text)
+
+        echo "Command Output: $OUTPUT"
+        echo "command_output<<EOF" >> $GITHUB_OUTPUT
+        echo "$OUTPUT" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
           
