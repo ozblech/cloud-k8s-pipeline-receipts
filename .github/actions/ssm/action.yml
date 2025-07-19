@@ -14,6 +14,9 @@ outputs:
   command_output:
     description: "Output of the command execution"
     value: ${{ steps.run-ssm-command.outputs.command_output }}
+  command_id:
+    description: "The ID of the command that was run"
+    value: ${{ steps.run-ssm-command.outputs.command_id }}
 
 runs:
   using: "composite"
@@ -50,4 +53,5 @@ runs:
             --output text)
 
           echo "command_output=$OUTPUT" >> $GITHUB_OUTPUT
+          echo "command_id=$COMMAND_ID" >> $GITHUB_OUTPUT
           
