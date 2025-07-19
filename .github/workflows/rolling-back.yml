@@ -112,6 +112,7 @@ jobs:
           {
             commands: [
               "#!/bin/bash",
+              export KUBECONFIG=/home/ec2-user/.kube/config,
               (if $r == "" then
                 "echo \"Rolling back to previous image tag: \($p)\"",
                 "kubectl set image deployment/\($d) receipts-api=\($i):\($p) -n default"
