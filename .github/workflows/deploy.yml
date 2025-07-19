@@ -57,7 +57,6 @@ jobs:
           INSTANCE_ID: ${{ steps.fetch-minikube-ec2-ip.outputs.instance_id }}
           IMAGE_TAG: ${{ steps.extract-image-tag.outputs.current_image_tag }}
         run: |
-          # Ensure kubectl is using Minikube
           aws ssm send-command \
             --instance-ids $INSTANCE_ID \
             --document-name "AWS-RunShellScript" \
