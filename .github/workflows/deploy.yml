@@ -18,6 +18,7 @@ jobs:
     env:
       IMAGE_REPO: ozblech/receipts-api
       DEPLOYMENT_NAME: receipts-api
+      AWS_REGION: us-west-2
 
     steps:
       - name: Checkout repository
@@ -87,3 +88,4 @@ jobs:
           aws_account_id: ${{ secrets.AWS_ACCOUNT_ID }}
           instance_id: ${{ steps.fetch-minikube-ec2-ip.outputs.instance_id }}
           commands-file-name: deploy-commands.json
+          aws_region: ${ env.AWS_REGION }
