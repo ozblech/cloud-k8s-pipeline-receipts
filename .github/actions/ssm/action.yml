@@ -29,4 +29,10 @@ runs:
           --parameters "$(jq -nc --argjson cmds '${{ inputs.commands }}' '{commands: $cmds}')" \
           --output text
       shell: bash
+
+    - name: Output command execution result
+      run: |
+        aws ssm list-command-invocations \
+        --command-id "56241ae5-cb86-475d-abbc-9f52bc467323" \
+        --details
           
