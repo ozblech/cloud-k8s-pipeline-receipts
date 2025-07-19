@@ -136,7 +136,7 @@ jobs:
       - name: Test SSM SendCommand
         id: ssm
         run: |
-          INSTANCE_ID="i-093a665de56df61ae""
+          INSTANCE_ID="i-093a665de56df61ae"
           CMD_OUTPUT=$(aws ssm send-command \
             --document-name "AWS-RunShellScript" \
             --instance-ids "$INSTANCE_ID" \
