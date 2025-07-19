@@ -98,27 +98,31 @@ jobs:
       #       --output text
 
       - name: Generate rollback commands
+        env:
+          REVISION_INPUT: ${{ github.event.inputs.revision }}
+          PREVIOUS_IMAGE_TAG: ${{ steps.get-latest-tag.outputs.previous_image_tag }}
+          DEPLOYMENT_NAME: ${{ env.DEPLOYMENT_NAME }}
+          IMAGE_REPO: ${{ env.IMAGE_REPO }}
         id: generate-commands
         run: |
-          COMMANDS=$(cat <<'EOF'
-          #!/bin/bash
-
-          if [ -z "$REVISION_INPUT" ]; then
-            echo "Rolling back to previous image tag: $PREVIOUS_IMAGE_TAG"
-            kubectl set image deployment/${DEPLOYMENT_NAME} receipts-api=${IMAGE_REPO}:${PREVIOUS_IMAGE_TAG} -n default
-          else
-            echo "Rolling back to revision: $REVISION_INPUT"
-            kubectl rollout undo deployment/${DEPLOYMENT_NAME} --to-revision=$REVISION_INPUT -n default
-          fi
-          kubectl rollout status deployment/${DEPLOYMENT_NAME} -n default
-          EOF
-          )
-
-          # Convert multiline bash to JSON array
-          JSON_COMMANDS=$(printf '%s\n' "$COMMANDS" | jq -R -s -c 'split("\n") | map(select(length > 0))')
-          
+          JSON_COMMANDS=$(jq -cn --arg r "$REVISION_INPUT" \
+                                  --arg p "$PREVIOUS_IMAGE_TAG" \
+                                  --arg d "$DEPLOYMENT_NAME" \
+                                  --arg i "$IMAGE_REPO" \
+          '["#!/bin/bash",
+            "REVISION_INPUT='\''\($r)'\''",
+            "PREVIOUS_IMAGE_TAG='\''\($p)'\''",
+            "DEPLOYMENT_NAME='\''\($d)'\''",
+            "IMAGE_REPO='\''\($i)'\''",
+            "if [ -z \"\$REVISION_INPUT\" ]; then",
+            "  echo \"Rolling back to previous image tag: \$PREVIOUS_IMAGE_TAG\"",
+            "  kubectl set image deployment/\${DEPLOYMENT_NAME} receipts-api=\${IMAGE_REPO}:\${PREVIOUS_IMAGE_TAG} -n default",
+            "else",
+            "  echo \"Rolling back to revision: \$REVISION_INPUT\"",
+            "  kubectl rollout undo deployment/\${DEPLOYMENT_NAME} --to-revision=\$REVISION_INPUT -n default",
+            "fi",
+            "kubectl rollout status deployment/\${DEPLOYMENT_NAME} -n default"]')
           echo "commands=$JSON_COMMANDS" >> $GITHUB_OUTPUT
-          echo "Generated commands: $JSON_COMMANDS"
 
       # - name: Run SSM command using action
       #   id: run-ssm-command
@@ -133,18 +137,14 @@ jobs:
         id: run-ssm-command
         env:
           INSTANCE_ID: ${{ steps.fetch-minikube-ec2-ip.outputs.instance_id }}
-          REVISION_INPUT: ${{ github.event.inputs.revision }}
-          PREVIOUS_IMAGE_TAG: ${{ steps.get-latest-tag.outputs.previous_image_tag }}
-          DEPLOYMENT_NAME: ${{ env.DEPLOYMENT_NAME }}
-          IMAGE_REPO: ${{ env.IMAGE_REPO }}
-          COMMANDS: ${{ steps.generate-commands.outputs.commands }}
+          commands: ${{ steps.generate-commands.outputs.commands }}
         run: |
           echo "Running command: $commands"
           aws ssm send-command \
-            --instance-ids $INSTANCE_ID \
+            --instance-ids "$INSTANCE_ID" \
             --document-name "AWS-RunShellScript" \
             --comment "Update Kubernetes deployment image" \
-            --parameters '{"commands": '"$COMMANDS"'}' \
+            --parameters "commands=$commands" \
             --region us-west-2 \
             --cloud-watch-output-config CloudWatchOutputEnabled=true \
             --output text
@@ -155,11 +155,11 @@ jobs:
           echo "SSM Output:"
           echo "${{ steps.run-ssm-command.outputs.command_output }}"
 
-      - name: Print SSM command output
-        run: |
-          aws ssm get-command-invocation \
-            --command-id ${{ steps.run-ssm-command.outputs.command_id }} \
-            --instance-id ${{ steps.fetch-minikube-ec2-ip.outputs.instance_id }}
-            --region us-west-2 \
-            --output json
+      # - name: Print SSM command output
+      #   run: |
+      #     aws ssm get-command-invocation \
+      #       --command-id ${{ steps.run-ssm-command.outputs.command_id }} \
+      #       --instance-id ${{ steps.fetch-minikube-ec2-ip.outputs.instance_id }}
+      #       --region us-west-2 \
+      #       --output json
 
