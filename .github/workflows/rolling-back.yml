@@ -98,28 +98,33 @@ jobs:
       #       --output text
 
       - name: Build rollback command dynamically
+        id: generate-commands
         env:
           REVISION_INPUT: ${{ github.event.inputs.revision }}
           PREVIOUS_IMAGE_TAG: ${{ steps.get-latest-tag.outputs.previous_image_tag }}
           DEPLOYMENT_NAME: ${{ env.DEPLOYMENT_NAME }}
           IMAGE_REPO: ${{ env.IMAGE_REPO }}
         run: |
-          JSON_COMMANDS=$(jq -n --arg r "$REVISION_INPUT" --arg p "$PREVIOUS_IMAGE_TAG" --arg d "$DEPLOYMENT_NAME" --arg i "$IMAGE_REPO" '
-            [
+          jq -n --arg r "$REVISION_INPUT" \
+                --arg p "$PREVIOUS_IMAGE_TAG" \
+                --arg d "$DEPLOYMENT_NAME" \
+                --arg i "$IMAGE_REPO" '
+          {
+            commands: [
               "#!/bin/bash",
-              "if [ -z \"\($r)\" ]; then",
-              "  echo \"Rolling back to previous image tag: \($p)\"",
-              "  kubectl set image deployment/\($d) receipts-api=\($i):\($p) -n default",
-              "else",
-              "  echo \"Rolling back to revision: \($r)\"",
-              "  kubectl rollout undo deployment/\($d) --to-revision=\($r) -n default",
-              "fi",
+              (if $r == "" then
+                "echo \"Rolling back to previous image tag: \($p)\"",
+                "kubectl set image deployment/\($d) receipts-api=\($i):\($p) -n default"
+              else
+                "echo \"Rolling back to revision: \($r)\"",
+                "kubectl rollout undo deployment/\($d) --to-revision=\($r) -n default"
+              end),
               "kubectl rollout status deployment/\($d) -n default"
-            ]'
-          )
-          echo "Running command: $JSON_COMMANDS"
-          echo "$JSON_COMMANDS" > commands.json
+            ]
+          }' > commands.json
 
+          echo "commands.json content:"
+          cat commands.json
 
 
       - name: Rollback via SSM to EC2
