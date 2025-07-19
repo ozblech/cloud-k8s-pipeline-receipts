@@ -73,9 +73,10 @@ jobs:
         env:
           IMAGE_TAG: ${{ steps.extract-image-tag.outputs.current_image_tag }}
         run: |
-          COMMANDS_JSON=$(jq -n --arg image_tag "$IMAGE_TAG" '[
+          COMMANDS_JSON=$(jq -n --arg image_tag "$IMAGE_TAG" \
+            --arg deployment ${{ env.DEPLOYMENT_NAME }} '[
             "export KUBECONFIG=/home/ec2-user/.kube/config",
-            "kubectl set image deployment/${{ env.DEPLOYMENT_NAME }} ${{ env.DEPLOYMENT_NAME }}=ozblech/${{ env.DEPLOYMENT_NAME }}:\($IMAGE_TAG)"
+            "kubectl set image deployment/($deployment) ($deployment)=ozblech/($deployment):\($image_tag)"
           ]')
           
           echo "$COMMANDS_JSON" > deploy-commands.json
