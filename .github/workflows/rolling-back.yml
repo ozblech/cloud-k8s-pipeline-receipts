@@ -105,23 +105,19 @@ jobs:
           IMAGE_REPO: ${{ env.IMAGE_REPO }}
         id: generate-commands
         run: |
-          JSON_COMMANDS=$(jq -cn --arg r "$REVISION_INPUT" \
-                                  --arg p "$PREVIOUS_IMAGE_TAG" \
-                                  --arg d "$DEPLOYMENT_NAME" \
-                                  --arg i "$IMAGE_REPO" \
-          '["#!/bin/bash",
-            "REVISION_INPUT='\''\($r)'\''",
-            "PREVIOUS_IMAGE_TAG='\''\($p)'\''",
-            "DEPLOYMENT_NAME='\''\($d)'\''",
-            "IMAGE_REPO='\''\($i)'\''",
-            "if [ -z \"\$REVISION_INPUT\" ]; then",
-            "  echo \"Rolling back to previous image tag: \$PREVIOUS_IMAGE_TAG\"",
-            "  kubectl set image deployment/\${DEPLOYMENT_NAME} receipts-api=\${IMAGE_REPO}:\${PREVIOUS_IMAGE_TAG} -n default",
-            "else",
-            "  echo \"Rolling back to revision: \$REVISION_INPUT\"",
-            "  kubectl rollout undo deployment/\${DEPLOYMENT_NAME} --to-revision=\$REVISION_INPUT -n default",
-            "fi",
-            "kubectl rollout status deployment/\${DEPLOYMENT_NAME} -n default"]')
+          JSON_COMMANDS=$(jq -cn '
+              [
+                "#!/bin/bash",
+                "if [ -z \\\"\\$REVISION_INPUT\\\" ]; then",
+                "  echo \\\"Rolling back to previous image tag: \\$PREVIOUS_IMAGE_TAG\\\"",
+                "  kubectl set image deployment/\\${DEPLOYMENT_NAME} receipts-api=\\${IMAGE_REPO}:\\${PREVIOUS_IMAGE_TAG} -n default",
+                "else",
+                "  echo \\\"Rolling back to revision: \\$REVISION_INPUT\\\"",
+                "  kubectl rollout undo deployment/\\${DEPLOYMENT_NAME} --to-revision=\\$REVISION_INPUT -n default",
+                "fi",
+                "kubectl rollout status deployment/\\${DEPLOYMENT_NAME} -n default"
+              ]
+            ')
           echo "commands=$JSON_COMMANDS" >> $GITHUB_OUTPUT
 
       # - name: Run SSM command using action
@@ -144,7 +140,7 @@ jobs:
             --instance-ids "$INSTANCE_ID" \
             --document-name "AWS-RunShellScript" \
             --comment "Update Kubernetes deployment image" \
-            --parameters "commands=$commands" \
+            --parameters commands=$commands \
             --region us-west-2 \
             --cloud-watch-output-config CloudWatchOutputEnabled=true \
             --output text
