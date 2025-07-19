@@ -31,39 +31,43 @@ runs:
           --instance-ids ${{ inputs.instance_id }} \
           --document-name "AWS-RunShellScript" \
           --comment "Running command on EC2 instance" \
-          --parameters "$(jq -nc --argjson cmds '${{ inputs.commands }}' '{commands: $cmds}')" \
+          --parameters commands=${{ inputs.commands }} \
+          --query "Command.CommandId" \
           --output text)
 
-          echo "COMMAND_ID=$COMMAND_ID" >> $GITHUB_ENV
+          echo "command_id=${COMMAND_ID}" >> $GITHUB_OUTPUT
 
-    - name: Wait for command result and fetch output
-      id: get-output
-      shell: bash
+    - name: Wait for command to finish
       run: |
-        # Wait until the command finishes
-        for i in {1..30}; do
+        echo "Waiting for command ID: ${{ steps.send.outputs.command_id }}"
+        while true; do
           STATUS=$(aws ssm list-command-invocations \
-            --command-id "$COMMAND_ID" \
+            --command-id "${{ steps.send.outputs.command_id }}" \
             --details \
             --query "CommandInvocations[0].Status" \
             --output text)
 
-          echo "Status: $STATUS"
-          if [[ "$STATUS" == "Success" || "$STATUS" == "Failed" || "$STATUS" == "Cancelled" || "$STATUS" == "TimedOut" ]]; then
+          echo "Current status: $STATUS"
+
+          if [[ "$STATUS" == "Success" || "$STATUS" == "Cancelled" || "$STATUS" == "Failed" ]]; then
             break
           fi
+
           sleep 5
         done
+      shell: bash
 
-        # Fetch command output
-        OUTPUT=$(aws ssm list-command-invocations \
-          --command-id "$COMMAND_ID" \
-          --details \
-          --query "CommandInvocations[0].CommandPlugins[0].Output" \
+    - name: Get command output
+      id: get-output
+      run: |
+        OUTPUT=$(aws ssm get-command-invocation \
+          --command-id "${{ steps.send.outputs.command_id }}" \
+          --instance-id "${{ inputs.instance_id }}" \
+          --query "StandardOutputContent" \
           --output text)
 
-        echo "Command Output: $OUTPUT"
-        echo "command_output<<EOF" >> $GITHUB_OUTPUT
-        echo "$OUTPUT" >> $GITHUB_OUTPUT
-        echo "EOF" >> $GITHUB_OUTPUT
+        echo "command_output<<EOF" >> "$GITHUB_OUTPUT"
+        echo "$OUTPUT" >> "$GITHUB_OUTPUT"
+        echo "EOF" >> "$GITHUB_OUTPUT"
+      shell: bash
           
