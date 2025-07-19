@@ -107,18 +107,19 @@ jobs:
           #!/bin/bash
           echo "REVISION_INPUT is: $REVISION_INPUT"
           echo "PREVIOUS_IMAGE_TAG is: $PREVIOUS_IMAGE_TAG"
-          if [ -z "${REVISION_INPUT}" ]; then
-            echo "Rolling back to previous image tag: ${PREVIOUS_IMAGE_TAG}"
+          if [ -z "$REVISION_INPUT" ]; then
+            echo "Rolling back to previous image tag: $PREVIOUS_IMAGE_TAG"
             kubectl set image deployment/${DEPLOYMENT_NAME} receipts-api=${IMAGE_REPO}:${PREVIOUS_IMAGE_TAG} -n default
           else
-            echo "Rolling back to revision: ${REVISION_INPUT}"
-            kubectl rollout undo deployment/${DEPLOYMENT_NAME} --to-revision=${REVISION_INPUT} -n default
+            echo "Rolling back to revision: $REVISION_INPUT"
+            kubectl rollout undo deployment/${DEPLOYMENT_NAME} --to-revision=$REVISION_INPUT -n default
           fi
           kubectl rollout status deployment/${DEPLOYMENT_NAME} -n default
           EOF
           )
 
-          echo "json_array=$(jq -R -s -c 'split("\n") | map(select(length > 0))' <<< \"$COMMANDS\")" >> "$GITHUB_OUTPUT"
+          json_array=$(jq -R -s -c 'split("\n") | map(select(length > 0))' <<< "$COMMANDS")
+          echo "json_array=${json_array}" >> "$GITHUB_OUTPUT"
 
       - name: Run SSM command using action
         id: run-ssm-command
