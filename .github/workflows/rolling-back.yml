@@ -56,7 +56,7 @@ jobs:
 
             if [ -z "$REVISION_INPUT" ]; then
                 echo "Rolling back to previous image tag: $PREVIOUS_IMAGE_TAG"
-                kubectl set image deployment/$DEPLOYMENT_NAME receipts=$IMAGE_REPO:$PREVIOUS_IMAGE_TAG -n default
+                kubectl set image deployment/$DEPLOYMENT_NAME receipts-api=$IMAGE_REPO:$PREVIOUS_IMAGE_TAG -n default
             else
                 echo "Rolling back to revision: $REVISION_INPUT"
                 kubectl rollout undo deployment/$DEPLOYMENT_NAME --to-revision=$REVISION_INPUT -n default
