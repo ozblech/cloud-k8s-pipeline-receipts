@@ -98,10 +98,15 @@ jobs:
       #       --output text
 
       - name: Generate rollback commands
+        env:
+          REVISION_INPUT: ${{ github.event.inputs.revision }}
+          PREVIOUS_IMAGE_TAG: ${{ steps.get-latest-tag.outputs.previous_image_tag }}
         id: generate
         run: |
           COMMANDS=$(cat <<'EOF'
           #!/bin/bash
+          echo "REVISION_INPUT is: $REVISION_INPUT"
+          echo "PREVIOUS_IMAGE_TAG is: $PREVIOUS_IMAGE_TAG"
           export KUBECONFIG=/home/ec2-user/.kube/config
           if [ -z "${REVISION_INPUT}" ]; then
             echo "Rolling back to previous image tag: ${PREVIOUS_IMAGE_TAG}"

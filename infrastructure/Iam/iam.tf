@@ -90,7 +90,8 @@ resource "aws_iam_role_policy" "github_actions_policy" {
           "ssm:ListCommands",
           "ssm:GetCommandInvocation",
           "ssm:GetDocument",
-          "ssm:DescribeDocument"
+          "ssm:DescribeDocument",
+          "ssm:ListCommandInvocations"
         ],
         Resource: "*"
       },
