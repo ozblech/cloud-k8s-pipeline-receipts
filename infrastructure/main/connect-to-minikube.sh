@@ -88,6 +88,10 @@ kubectl get nodes || echo "❌ Failed to connect to Minikube. Check your SSH tun
 # kubectl apply -f ../receipts_project/kubernetes/
 # echo "✅ Kubernetes manifests applied successfully."
 
+# Helm install all charts in receipts_project/helm
+echo "🔄 Installing Helm charts...""
+helm install receipts-api ../../receipts_project/helm_chart -f ../../receipts_project/helm_chart/values.yaml -f ../../receipts_project/helm_chart/values-secret.yaml
+
 # Run this script with: source connect-to-minikube.sh
 # so that the KUBECONFIG variable is set in the current shell session.
 # or run export export KUBECONFIG=./infrastructure/main/minikube-ec2/minikube-ec2-config
