@@ -72,9 +72,10 @@ jobs:
       - name: Create JSON command file
         env:
           IMAGE_TAG: ${{ steps.extract-image-tag.outputs.current_image_tag }}
+          DEPLOYMENT_NAME: ${{ env.DEPLOYMENT_NAME }}
         run: |
           COMMANDS_JSON=$(jq -n --arg image_tag "$IMAGE_TAG" \
-            --arg deployment ${{ env.DEPLOYMENT_NAME }} '[
+            --arg deployment "$DEPLOYMENT_NAME" '[
             "export KUBECONFIG=/home/ec2-user/.kube/config",
             "kubectl set image deployment/($deployment) ($deployment)=ozblech/($deployment):\($image_tag)"
           ]')
