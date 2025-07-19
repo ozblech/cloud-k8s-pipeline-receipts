@@ -7,12 +7,10 @@ inputs:
     required: true
   instance_id:
     description: "The ID of the EC2 instance to run the command on"
-  commands:
-    description: "The command to run on the EC2 instance"
     required: true
-  image_tag:
-    description: "The image tag to use in the command (optional)"
-    required: false
+  commands-file-name:
+    description: "The command to run on the EC2 instance (in JSON format file) "
+    required: true
 outputs:
   command_output:
     description: "Output of the command execution"
@@ -34,7 +32,6 @@ runs:
       shell: bash
       env:
         INSTANCE_ID: ${{ inputs.instance_id }}
-        IMAGE_TAG: ${{ inputs.image_tag }}
         AWS_REGION: us-west-2
       run: |
         set -euo pipefail
@@ -42,8 +39,8 @@ runs:
           --instance-ids ${{ inputs.instance_id }} \
           --document-name "AWS-RunShellScript" \
           --comment "Running command on EC2 instance" \
-          --parameters '{"commands": ${{ inputs.commands }}}' \
-          --region us-west-2 \
+          --parameters file://${{ inputs.commands-file-name }} \
+          --region $AWS_REGION \
           --query "Command.CommandId" \
           --output text)
 
