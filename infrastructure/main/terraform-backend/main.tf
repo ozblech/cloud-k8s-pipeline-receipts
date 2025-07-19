@@ -1,9 +1,11 @@
-resource "aws_s3_bucket" "terraform_state" {
+provider "aws" {
+  region = "us-west-2"
+}resource "aws_s3_bucket" "terraform_state" {
   bucket = "my-terraform-state-bucket-receipts-app-oz"
 
-#   lifecycle {
-#     prevent_destroy = true
-#   }
+  lifecycle {
+    prevent_destroy = true
+  }
 
   tags = {
     Name        = "Terraform State"
@@ -38,6 +40,10 @@ resource "aws_dynamodb_table" "terraform_locks" {
     name = "LockID"
     type = "S"
   }
+
+  lifecycle {
+    prevent_destroy = true
+ }
 
   tags = {
     Name = "Terraform Locks"
