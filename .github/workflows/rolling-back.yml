@@ -97,4 +97,18 @@ jobs:
             --region us-west-2 \
             --output text
 
+      - name: Run SSM command using action
+        uses: ./.github/actions/ssm
+        with:
+          aws_account_id: ${{ secrets.AWS_ACCOUNT_ID }}
+          instance_id: ${{ steps.fetch-minikube-ec2-ip.outputs.instance_id }}
+          command: |
+            if [ -z "${{ github.event.inputs.revision }}" ]; then
+              echo "Rolling back to previous image tag: ${{ steps.get-latest-tag.outputs.previous_image_tag }}"
+              kubectl set image deployment/${{ env.DEPLOYMENT_NAME }} receipts-api=${{ env.IMAGE_REPO }}:${{ steps.get-latest-tag.outputs.previous_image_tag }} -n default
+            else
+              echo "Rolling back to revision: ${{ github.event.inputs.revision }}"
+              kubectl rollout undo deployment/${{ env.DEPLOYMENT_NAME }} --to-revision=${{ github.event.inputs.revision }} -n default
+            fi
+            kubectl rollout status deployment/${{ env.DEPLOYMENT_NAME }} -n default
 

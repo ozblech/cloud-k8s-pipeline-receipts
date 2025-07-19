@@ -1,0 +1,32 @@
+name: Run-SSM-Command
+description: "Runs a command on an EC2 instance using AWS SSM."
+
+inputs:
+  aws_account_id:
+    description: "AWS Account ID to construct the role ARN"
+    required: true
+  instance_id:
+    description: "The ID of the EC2 instance to run the command on"
+  command:
+    description: "The command to run on the EC2 instance"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Configure AWS credentials (via OIDC)
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        role-to-assume: "arn:aws:iam::${{ inputs.aws_account_id }}:role/github-actions-role"
+        aws-region: us-west-2
+
+    - name: Run command on EC2 instance
+      run: |
+        aws ssm send-command \
+          --instance-ids ${{ inputs.instance_id }} \
+          --document-name "AWS-RunShellScript" \
+          --comment "Running command on EC2 instance" \
+          --parameters 'commands=["#!/bin/bash", "${{ inputs.command }}"]' \
+          --output text
+      shell: bash
+          
