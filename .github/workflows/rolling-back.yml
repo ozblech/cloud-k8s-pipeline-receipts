@@ -124,9 +124,43 @@ jobs:
             ]
           }' > commands.json
 
+
+
           echo "commands.json content:"
           cat commands.json
 
+          JSON_COMMANDS=$(jq -n --arg r "$REVISION_INPUT" \
+                    --arg p "$PREVIOUS_IMAGE_TAG" \
+                    --arg d "$DEPLOYMENT_NAME" \
+                    --arg i "$IMAGE_REPO" '
+          {
+            commands: (
+              [
+                "#!/bin/bash",
+                "export KUBECONFIG=/home/ec2-user/.kube/config"
+              ] +
+              (if $r == "" then
+                [
+                  "echo \"Rolling back to previous image tag: \($p)\"",
+                  "kubectl set image deployment/\($d) receipts-api=\($i):\($p) -n default"
+                ]
+              else
+                [
+                  "echo \"Rolling back to revision: \($r)\"",
+                  "kubectl rollout undo deployment/\($d) --to-revision=\($r) -n default"
+                ]
+              end) +
+              [
+                "kubectl rollout status deployment/\($d) -n default"
+              ]
+            )
+          }')
+
+          echo "JSON_COMMANDS content:"
+          echo "$JSON_COMMANDS"
+
+          echo "commands=$JSON_COMMANDS" >> $GITHUB_OUTPUT
+          
 
       - name: Rollback via SSM to EC2
         id: run-ssm-command
@@ -139,7 +173,8 @@ jobs:
             --instance-ids "$INSTANCE_ID" \
             --document-name "AWS-RunShellScript" \
             --comment "Update Kubernetes deployment image" \
-            --parameters file://commands.json \
+            # --parameters file://commands.json \
+            --parameters commands="$commands" \
             --region us-west-2 \
             --cloud-watch-output-config CloudWatchOutputEnabled=true \
             --output text
