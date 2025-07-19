@@ -30,6 +30,7 @@ runs:
     - name: Run command on EC2 instance
       shell: bash
       run: |
+        set -euo pipefail
         COMMAND_ID=$(aws ssm send-command \
           --instance-ids ${{ inputs.instance_id }} \
           --document-name "AWS-RunShellScript" \

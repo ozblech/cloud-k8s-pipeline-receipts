@@ -126,6 +126,7 @@ jobs:
 
       - name: Run SSM command using action
         id: run-ssm-command
+        continue-on-error: true
         uses: ./.github/actions/ssm
         with:
           aws_account_id: ${{ secrets.AWS_ACCOUNT_ID }}
