@@ -124,8 +124,6 @@ jobs:
             ]
           }' > commands.json
 
-
-
           echo "commands.json content:"
           cat commands.json
 
@@ -156,8 +154,8 @@ jobs:
             )
           }')
 
-          echo "JSON_COMMANDS content:"
-          echo "$JSON_COMMANDS"
+          # echo "JSON_COMMANDS content:"
+          # echo "$JSON_COMMANDS"
 
           echo "commands=$JSON_COMMANDS" >> $GITHUB_OUTPUT
           
