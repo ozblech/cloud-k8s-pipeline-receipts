@@ -122,6 +122,7 @@ jobs:
           JSON_COMMANDS=$(printf '%s\n' "$COMMANDS" | jq -R -s -c 'split("\n") | map(select(length > 0))')
           
           echo "commands=$JSON_COMMANDS" >> $GITHUB_OUTPUT
+          echo "Generated commands: $JSON_COMMANDS"
 
       - name: Run SSM command using action
         id: run-ssm-command

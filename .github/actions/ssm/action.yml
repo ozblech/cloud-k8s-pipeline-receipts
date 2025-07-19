@@ -31,7 +31,7 @@ runs:
           --instance-ids ${{ inputs.instance_id }} \
           --document-name "AWS-RunShellScript" \
           --comment "Running command on EC2 instance" \
-          --parameters "{\"commands\": ${{ inputs.commands }}}" \
+          --parameters commands=${{ inputs.commands }} \
           --region us-west-2 \
           --query "Command.CommandId" \
           --output text)
