@@ -35,4 +35,5 @@ runs:
         aws ssm list-command-invocations \
         --command-id "56241ae5-cb86-475d-abbc-9f52bc467323" \
         --details
+      shell: bash
           
