@@ -88,4 +88,4 @@ jobs:
           aws_account_id: ${{ secrets.AWS_ACCOUNT_ID }}
           instance_id: ${{ steps.fetch-minikube-ec2-ip.outputs.instance_id }}
           commands-file-name: deploy-commands.json
-          aws_region: ${ env.AWS_REGION }
+          aws_region: ${{ env.AWS_REGION }}
