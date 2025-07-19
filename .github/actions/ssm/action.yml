@@ -11,6 +11,9 @@ inputs:
   commands-file-name:
     description: "The command to run on the EC2 instance (in JSON format file) "
     required: true
+  aws_region:
+    description: "AWS region where the EC2 instance is located"
+    required: true
 outputs:
   command_output:
     description: "Output of the command execution"
@@ -26,13 +29,13 @@ runs:
       uses: aws-actions/configure-aws-credentials@v2
       with:
         role-to-assume: "arn:aws:iam::${{ inputs.aws_account_id }}:role/github-actions-role"
-        aws-region: us-west-2
+        aws-region: ${{ inputs.aws_region }}
 
     - name: Run command on EC2 instance
       shell: bash
       env:
         INSTANCE_ID: ${{ inputs.instance_id }}
-        AWS_REGION: us-west-2
+        AWS_REGION: ${{ inputs.aws_region }}
       run: |
         set -euo pipefail
         COMMAND_ID=$(aws ssm send-command \

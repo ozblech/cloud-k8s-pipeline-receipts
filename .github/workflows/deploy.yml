@@ -15,6 +15,9 @@ jobs:
     name: Deploy to EC2 Minikube
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
+    env:
+      IMAGE_REPO: ozblech/receipts-api
+      DEPLOYMENT_NAME: receipts-api
 
     steps:
       - name: Checkout repository
@@ -46,21 +49,41 @@ jobs:
       - name: Print DNS
         run: echo "DNS is ${{ steps.fetch-minikube-ec2-ip.outputs.public_dns }}"
 
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v3
-        with:
-          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-actions-role
-          aws-region: us-west-2
+      # - name: Configure AWS Credentials
+      #   uses: aws-actions/configure-aws-credentials@v3
+      #   with:
+      #     role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-actions-role
+      #     aws-region: us-west-2
 
-      - name: Deploy via SSM to EC2
+      # - name: Deploy via SSM to EC2
+      #   env:
+      #     INSTANCE_ID: ${{ steps.fetch-minikube-ec2-ip.outputs.instance_id }}
+      #     IMAGE_TAG: ${{ steps.extract-image-tag.outputs.current_image_tag }}
+      #   run: |
+      #     aws ssm send-command \
+      #       --instance-ids $INSTANCE_ID \
+      #       --document-name "AWS-RunShellScript" \
+      #       --comment "Update Kubernetes deployment image" \
+      #       --parameters commands=["export KUBECONFIG=/home/ec2-user/.kube/config","kubectl set image deployment/receipts-api receipts-api=ozblech/receipts-api:$IMAGE_TAG"] \
+      #       --cloud-watch-output-config CloudWatchOutputEnabled=true \
+      #       --output text
+
+      - name: Create JSON command file
         env:
-          INSTANCE_ID: ${{ steps.fetch-minikube-ec2-ip.outputs.instance_id }}
           IMAGE_TAG: ${{ steps.extract-image-tag.outputs.current_image_tag }}
         run: |
-          aws ssm send-command \
-            --instance-ids $INSTANCE_ID \
-            --document-name "AWS-RunShellScript" \
-            --comment "Update Kubernetes deployment image" \
-            --parameters commands=["export KUBECONFIG=/home/ec2-user/.kube/config","kubectl set image deployment/receipts-api receipts-api=ozblech/receipts-api:$IMAGE_TAG"] \
-            --cloud-watch-output-config CloudWatchOutputEnabled=true \
-            --output text
+          COMMANDS_JSON=$(jq -n --arg image_tag "$IMAGE_TAG" '[
+            "export KUBECONFIG=/home/ec2-user/.kube/config",
+            "kubectl set image deployment/$DEPLOYMENT_NAME $DEPLOYMENT_NAME=ozblech/$DEPLOYMENT_NAME:\($image_tag)"
+          ]')
+          
+          echo "$COMMANDS_JSON" > commands.json
+          cat deploy-commands.json
+
+      - name: Run SSM command using action
+        id: run-ssm-command
+        uses: ./.github/actions/ssm
+        with:
+          aws_account_id: ${{ secrets.AWS_ACCOUNT_ID }}
+          instance_id: ${{ steps.fetch-minikube-ec2-ip.outputs.instance_id }}
+          commands-file-name: deploy-commands.json
