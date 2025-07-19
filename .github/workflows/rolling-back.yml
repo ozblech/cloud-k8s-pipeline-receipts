@@ -121,5 +121,5 @@ jobs:
         with:
           aws_account_id: ${{ secrets.AWS_ACCOUNT_ID }}
           instance_id: ${{ steps.fetch-minikube-ec2-ip.outputs.instance_id }}
-          command: ${{ steps.generate.outputs.json_array }}
+          commands: ${{ steps.generate.outputs.json_array }}
 

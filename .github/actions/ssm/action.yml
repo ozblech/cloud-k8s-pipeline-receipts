@@ -7,7 +7,7 @@ inputs:
     required: true
   instance_id:
     description: "The ID of the EC2 instance to run the command on"
-  command:
+  commands:
     description: "The command to run on the EC2 instance"
     required: true
 
@@ -26,7 +26,7 @@ runs:
           --instance-ids ${{ inputs.instance_id }} \
           --document-name "AWS-RunShellScript" \
           --comment "Running command on EC2 instance" \
-          --parameters 'commands=["#!/bin/bash", "${{ inputs.command }}"]' \
+          --parameters "$(jq -nc --argjson cmds '${{ inputs.commands }}' '{commands: $cmds}')" \
           --output text
       shell: bash
           
