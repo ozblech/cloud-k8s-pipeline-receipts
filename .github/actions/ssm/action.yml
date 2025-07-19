@@ -10,6 +10,10 @@ inputs:
   commands:
     description: "The command to run on the EC2 instance"
     required: true
+outputs:
+  command_output:
+    description: "Output of the command execution"
+    value: ${{ steps.run-ssm-command.outputs.command_output }}
 
 runs:
   using: "composite"

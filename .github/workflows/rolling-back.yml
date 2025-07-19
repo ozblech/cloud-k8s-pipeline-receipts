@@ -121,9 +121,14 @@ jobs:
           echo "json_array=$(jq -R -s -c 'split("\n") | map(select(length > 0))' <<< \"$COMMANDS\")" >> "$GITHUB_OUTPUT"
 
       - name: Run SSM command using action
+        id: run-ssm-command
         uses: ./.github/actions/ssm
         with:
           aws_account_id: ${{ secrets.AWS_ACCOUNT_ID }}
           instance_id: ${{ steps.fetch-minikube-ec2-ip.outputs.instance_id }}
           commands: ${{ steps.generate.outputs.json_array }}
+
+      - name: Output command execution result
+        run: |
+          echo "Command output: ${{ steps.run-ssm-command.outputs.command_output }}"
 
