@@ -58,14 +58,22 @@ jobs:
           IMAGE_TAG: ${{ steps.extract-image-tag.outputs.current_image_tag }}
         run: |
           # Ensure kubectl is using Minikube
-          export KUBECONFIG=\$HOME/.kube/config
           aws ssm send-command \
             --instance-ids $INSTANCE_ID \
             --document-name "AWS-RunShellScript" \
             --comment "Update Kubernetes deployment image" \
-            --parameters commands=["kubectl set image deployment/receipts-api receipts-api=ozblech/receipts-api:$IMAGE_TAG"] \
+            --parameters commands=["export KUBECONFIG=/home/ec2-user/.kube/config","kubectl set image deployment/receipts-api receipts-api=ozblech/receipts-api:$IMAGE_TAG"] \
             --cloud-watch-output-config CloudWatchOutputEnabled=true \
             --output text
+
+      - name: Wait and Show SSM Output
+        run: |
+          COMMAND_ID=$(cat command_id.txt)
+          sleep 10
+          aws ssm list-command-invocations \
+            --command-id "$COMMAND_ID" \
+            --details \
+            --region us-west-2
 
       # - name: Deploy to Minikube via SSH
       #   env:
