@@ -54,4 +54,6 @@ runs:
 
           echo "command_output=$OUTPUT" >> $GITHUB_OUTPUT
           echo "command_id=$COMMAND_ID" >> $GITHUB_OUTPUT
+          echo "Command executed successfully. Output: $OUTPUT"
+          echo "Command ID: $COMMAND_ID"
           
