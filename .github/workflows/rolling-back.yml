@@ -140,7 +140,7 @@ jobs:
       - name: Print SSM command output
         run: |
           aws ssm get-command-invocation \
-            --command-id "$COMMAND_ID" \
+            --command-id ${{ steps.run-ssm-command.outputs.command_id }} \
             --instance-id ${{ steps.fetch-minikube-ec2-ip.outputs.instance_id }}
             --region us-west-2 \
             --output json
