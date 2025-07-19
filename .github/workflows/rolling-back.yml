@@ -118,8 +118,10 @@ jobs:
           EOF
           )
 
-          json_array=$(jq -R -s -c 'split("\n") | map(select(length > 0))' <<< "$COMMANDS")
-          echo "json_array=${json_array}" >> "$GITHUB_OUTPUT"
+          # Convert multiline bash to JSON array
+          JSON_COMMANDS=$(printf '%s\n' "$COMMANDS" | jq -R -s -c 'split("\n") | map(select(length > 0))')
+          
+          echo "commands=$JSON_COMMANDS" >> $GITHUB_OUTPUT
 
       - name: Run SSM command using action
         id: run-ssm-command
@@ -127,7 +129,7 @@ jobs:
         with:
           aws_account_id: ${{ secrets.AWS_ACCOUNT_ID }}
           instance_id: ${{ steps.fetch-minikube-ec2-ip.outputs.instance_id }}
-          commands: ${{ steps.generate.outputs.json_array }}
+          commands: ${{ steps.generate.outputs.commands }}
 
       - name: Output SSM result
         run: |
