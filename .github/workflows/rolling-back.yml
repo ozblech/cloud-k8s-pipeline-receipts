@@ -71,44 +71,55 @@ jobs:
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-actions-role
           aws-region: us-west-2
 
-      - name: Rollback via SSM to EC2
-        env:
-          INSTANCE_ID: ${{ steps.fetch-minikube-ec2-ip.outputs.instance_id }}
-          REVISION_INPUT: ${{ github.event.inputs.revision }}
-          PREVIOUS_IMAGE_TAG: ${{ steps.get-latest-tag.outputs.previous_image_tag }}
-          EC2_PUBLIC_DNS: ${{ steps.fetch-minikube-ec2-ip.outputs.public_dns }}
+      # - name: Rollback via SSM to EC2
+      #   env:
+      #     INSTANCE_ID: ${{ steps.fetch-minikube-ec2-ip.outputs.instance_id }}
+      #     REVISION_INPUT: ${{ github.event.inputs.revision }}
+      #     PREVIOUS_IMAGE_TAG: ${{ steps.get-latest-tag.outputs.previous_image_tag }}
+      #     EC2_PUBLIC_DNS: ${{ steps.fetch-minikube-ec2-ip.outputs.public_dns }}
+      #   run: |
+      #     aws ssm send-command \
+      #       --instance-ids "$INSTANCE_ID" \
+      #       --document-name "AWS-RunShellScript" \
+      #       --comment "Rollback deployment" \
+      #       --parameters 'commands=["#!/bin/bash",
+      #         "export KUBECONFIG=/home/ec2-user/.kube/config",
+      #         "if [ -z \"${REVISION_INPUT}\" ]; then",
+      #         "  echo Rolling back to previous image tag: ${PREVIOUS_IMAGE_TAG}",
+      #         "  kubectl set image deployment/${DEPLOYMENT_NAME} receipts-api=${IMAGE_REPO}:${PREVIOUS_IMAGE_TAG} -n default",
+      #         "else",
+      #         "  echo Rolling back to revision: ${REVISION_INPUT}",
+      #         "  kubectl rollout undo deployment/${DEPLOYMENT_NAME} --to-revision=${REVISION_INPUT} -n default",
+      #         "fi",
+      #         "kubectl rollout status deployment/${DEPLOYMENT_NAME} -n default"
+      #       ]' \
+      #       --cloud-watch-output-config CloudWatchOutputEnabled=true \
+      #       --region us-west-2 \
+      #       --output text
+
+      - name: Generate rollback commands
+        id: generate
         run: |
-          aws ssm send-command \
-            --instance-ids "$INSTANCE_ID" \
-            --document-name "AWS-RunShellScript" \
-            --comment "Rollback deployment" \
-            --parameters 'commands=["#!/bin/bash",
-              "export KUBECONFIG=/home/ec2-user/.kube/config",
-              "if [ -z \"${REVISION_INPUT}\" ]; then",
-              "  echo Rolling back to previous image tag: ${PREVIOUS_IMAGE_TAG}",
-              "  kubectl set image deployment/${DEPLOYMENT_NAME} receipts-api=${IMAGE_REPO}:${PREVIOUS_IMAGE_TAG} -n default",
-              "else",
-              "  echo Rolling back to revision: ${REVISION_INPUT}",
-              "  kubectl rollout undo deployment/${DEPLOYMENT_NAME} --to-revision=${REVISION_INPUT} -n default",
-              "fi",
-              "kubectl rollout status deployment/${DEPLOYMENT_NAME} -n default"
-            ]' \
-            --cloud-watch-output-config CloudWatchOutputEnabled=true \
-            --region us-west-2 \
-            --output text
+          COMMANDS=$(cat <<'EOF'
+          #!/bin/bash
+          export KUBECONFIG=/home/ec2-user/.kube/config
+          if [ -z "${REVISION_INPUT}" ]; then
+            echo "Rolling back to previous image tag: ${PREVIOUS_IMAGE_TAG}"
+            kubectl set image deployment/${DEPLOYMENT_NAME} receipts-api=${IMAGE_REPO}:${PREVIOUS_IMAGE_TAG} -n default
+          else
+            echo "Rolling back to revision: ${REVISION_INPUT}"
+            kubectl rollout undo deployment/${DEPLOYMENT_NAME} --to-revision=${REVISION_INPUT} -n default
+          fi
+          kubectl rollout status deployment/${DEPLOYMENT_NAME} -n default
+          EOF
+          )
+
+          echo "json_array=$(jq -R -s -c 'split("\n") | map(select(length > 0))' <<< \"$COMMANDS\")" >> "$GITHUB_OUTPUT"
 
       - name: Run SSM command using action
         uses: ./.github/actions/ssm
         with:
           aws_account_id: ${{ secrets.AWS_ACCOUNT_ID }}
           instance_id: ${{ steps.fetch-minikube-ec2-ip.outputs.instance_id }}
-          command: |
-            if [ -z "${{ github.event.inputs.revision }}" ]; then
-              echo "Rolling back to previous image tag: ${{ steps.get-latest-tag.outputs.previous_image_tag }}"
-              kubectl set image deployment/${{ env.DEPLOYMENT_NAME }} receipts-api=${{ env.IMAGE_REPO }}:${{ steps.get-latest-tag.outputs.previous_image_tag }} -n default
-            else
-              echo "Rolling back to revision: ${{ github.event.inputs.revision }}"
-              kubectl rollout undo deployment/${{ env.DEPLOYMENT_NAME }} --to-revision=${{ github.event.inputs.revision }} -n default
-            fi
-            kubectl rollout status deployment/${{ env.DEPLOYMENT_NAME }} -n default
+          commands: ${{ steps.generate.outputs.json_array }}
 
