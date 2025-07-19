@@ -98,6 +98,11 @@ jobs:
       #       --output text
 
       - name: Build rollback command dynamically
+        env:
+          REVISION_INPUT: ${{ github.event.inputs.revision }}
+          PREVIOUS_IMAGE_TAG: ${{ steps.get-latest-tag.outputs.previous_image_tag }}
+          DEPLOYMENT_NAME: ${{ env.DEPLOYMENT_NAME }}
+          IMAGE_REPO: ${{ env.IMAGE_REPO }}
         run: |
           JSON_COMMANDS=$(jq -n --arg r "$REVISION_INPUT" --arg p "$PREVIOUS_IMAGE_TAG" --arg d "$DEPLOYMENT_NAME" --arg i "$IMAGE_REPO" '
             [
