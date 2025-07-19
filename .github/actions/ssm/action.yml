@@ -10,6 +10,9 @@ inputs:
   commands:
     description: "The command to run on the EC2 instance"
     required: true
+  image_tag:
+    description: "The image tag to use in the command (optional)"
+    required: false
 outputs:
   command_output:
     description: "Output of the command execution"
@@ -29,6 +32,10 @@ runs:
 
     - name: Run command on EC2 instance
       shell: bash
+      env:
+        INSTANCE_ID: ${{ inputs.instance_id }}
+        IMAGE_TAG: ${{ inputs.image_tag }}
+        AWS_REGION: us-west-2
       run: |
         set -euo pipefail
         COMMAND_ID=$(aws ssm send-command \
@@ -52,6 +59,11 @@ runs:
             --instance-id ${{ inputs.instance_id }} \
             --query 'StandardOutputContent' \
             --output text)
+          ERROR=$(aws ssm get-command-invocation \
+          --command-id "$COMMAND_ID" \
+          --instance-id ${{ inputs.instance_id }} \
+          --query 'StandardErrorContent' \
+          --output text)
 
           echo "command_output=$OUTPUT" >> $GITHUB_OUTPUT
           echo "command_id=$COMMAND_ID" >> $GITHUB_OUTPUT

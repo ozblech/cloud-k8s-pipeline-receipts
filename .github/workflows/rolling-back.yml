@@ -98,15 +98,11 @@ jobs:
       #       --output text
 
       - name: Generate rollback commands
-        env:
-          REVISION_INPUT: ${{ github.event.inputs.revision }}
-          PREVIOUS_IMAGE_TAG: ${{ steps.get-latest-tag.outputs.previous_image_tag }}
         id: generate
         run: |
           COMMANDS=$(cat <<'EOF'
           #!/bin/bash
-          echo "REVISION_INPUT is: $REVISION_INPUT"
-          echo "PREVIOUS_IMAGE_TAG is: $PREVIOUS_IMAGE_TAG"
+
           if [ -z "$REVISION_INPUT" ]; then
             echo "Rolling back to previous image tag: $PREVIOUS_IMAGE_TAG"
             kubectl set image deployment/${DEPLOYMENT_NAME} receipts-api=${IMAGE_REPO}:${PREVIOUS_IMAGE_TAG} -n default
@@ -124,14 +120,33 @@ jobs:
           echo "commands=$JSON_COMMANDS" >> $GITHUB_OUTPUT
           echo "Generated commands: $JSON_COMMANDS"
 
-      - name: Run SSM command using action
+      # - name: Run SSM command using action
+      #   id: run-ssm-command
+      #   uses: ./.github/actions/ssm
+      #   with:
+      #     aws_account_id: ${{ secrets.AWS_ACCOUNT_ID }}
+      #     instance_id: ${{ steps.fetch-minikube-ec2-ip.outputs.instance_id }}
+      #     image_tag: ${{ steps.get-latest-tag.outputs.previous_image_tag }}
+      #     commands: ${{ steps.generate.outputs.commands }}
+
+      - name: Rollback via SSM to EC2
         id: run-ssm-command
-        continue-on-error: true
-        uses: ./.github/actions/ssm
-        with:
-          aws_account_id: ${{ secrets.AWS_ACCOUNT_ID }}
-          instance_id: ${{ steps.fetch-minikube-ec2-ip.outputs.instance_id }}
-          commands: ${{ steps.generate.outputs.commands }}
+        env:
+          INSTANCE_ID: ${{ steps.fetch-minikube-ec2-ip.outputs.instance_id }}
+          REVISION_INPUT: ${{ github.event.inputs.revision }}
+          PREVIOUS_IMAGE_TAG: ${{ steps.get-latest-tag.outputs.previous_image_tag }}
+          DEPLOYMENT_NAME: ${{ env.DEPLOYMENT_NAME }}
+          IMAGE_REPO: ${{ env.IMAGE_REPO }}
+        run: |
+          echo "Running command: $commands"
+          aws ssm send-command \
+            --instance-ids $INSTANCE_ID \
+            --document-name "AWS-RunShellScript" \
+            --comment "Update Kubernetes deployment image" \
+            --parameters '{"commands": $commands' \
+            --cloud-watch-output-config CloudWatchOutputEnabled=true \
+            --output text
+
 
       - name: Output SSM result
         run: |
