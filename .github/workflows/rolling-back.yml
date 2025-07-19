@@ -154,10 +154,9 @@ jobs:
             )
           }')
 
-          # echo "JSON_COMMANDS content:"
-          # echo "$JSON_COMMANDS"
+          ENCODED_JSON_COMMANDS=$(echo "$JSON_COMMANDS" | base64)
 
-          echo "commands=$JSON_COMMANDS" >> $GITHUB_OUTPUT
+          echo "commands_b64=$ENCODED_JSON_COMMANDS" >> $GITHUB_OUTPUT
           
 
       - name: Rollback via SSM to EC2
@@ -172,7 +171,7 @@ jobs:
             --document-name "AWS-RunShellScript" \
             --comment "Update Kubernetes deployment image" \
             # --parameters file://commands.json \
-            --parameters commands="$commands" \
+            --parameters commands=$(echo "$commands" | base64 --decode) \
             --region us-west-2 \
             --cloud-watch-output-config CloudWatchOutputEnabled=true \
             --output text
