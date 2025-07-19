@@ -90,5 +90,5 @@ kubectl get nodes || echo "❌ Failed to connect to Minikube. Check your SSH tun
 
 # Run this script with: source connect-to-minikube.sh
 # so that the KUBECONFIG variable is set in the current shell session.
-# or run export KUBECONFIG=./infrastructure/minikube-ec2/minikube-ec2-config
+# or run export export KUBECONFIG=./infrastructure/main/minikube-ec2/minikube-ec2-config
 
