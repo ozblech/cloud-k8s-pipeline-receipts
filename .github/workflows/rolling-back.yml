@@ -88,12 +88,12 @@ jobs:
         run: |
           jq -n --arg d "$DEPLOYMENT_NAME" '
             {
-              commands: [
-                "#!/bin/bash",
-                "export KUBECONFIG=/home/ec2-user/.kube/config",
-                "kubectl get deployment/\($d) -o jsonpath='\''{.spec.template.spec.containers[0].image}'\'' -n default"
-              ]
-            }' > verify-image-command.json
+            "commands": [
+              "#!/bin/bash",
+              "export KUBECONFIG=/home/ec2-user/.kube/config",
+              "echo $(kubectl get deployment/receipts-api -o jsonpath='{.spec.template.spec.containers[0].image}' -n default)"
+            ]
+          }' > verify-image-command.json
 
       - name: Verify rollback result via SSM
         id: verify-rollback

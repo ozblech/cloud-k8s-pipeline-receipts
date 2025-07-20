@@ -60,7 +60,10 @@ runs:
             --region "$AWS_REGION" \
             --query "StandardOutputContent" \
             --output text)
-
+            
+          echo "---- RAW OUTPUT ----"
+          echo "$COMMAND_OUTPUT"
+          echo "--------------------"
           echo "command_output<<EOF" >> "$GITHUB_OUTPUT"
           echo "$COMMAND_OUTPUT" >> "$GITHUB_OUTPUT"
           echo "EOF" >> "$GITHUB_OUTPUT"
