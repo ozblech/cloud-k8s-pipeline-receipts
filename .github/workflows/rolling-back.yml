@@ -120,7 +120,6 @@ jobs:
             echo "✅ Rollback verified successfully: Image tag matches expected."
           fi
 
-
       - name: Summarize Rollback
         run: |
           echo "## Rollback Summary" >> $GITHUB_STEP_SUMMARY

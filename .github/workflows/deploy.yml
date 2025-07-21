@@ -30,10 +30,10 @@ jobs:
         id: extract-image-tag
         uses: ./.github/actions/extract-image-tag
 
-      - name: Setup SSH key
-        run: |
-          echo "${{ secrets.EC2_SSH_KEY }}" > ec2_key.pem
-          chmod 600 ec2_key.pem
+      # - name: Setup SSH key
+      #   run: |
+      #     echo "${{ secrets.EC2_SSH_KEY }}" > ec2_key.pem
+      #     chmod 600 ec2_key.pem
     
       - name: echo current image tag and minikube IP
         run: |
@@ -50,6 +50,35 @@ jobs:
       - name: Print DNS
         run: echo "DNS is ${{ steps.fetch-minikube-ec2-ip.outputs.public_dns }}"
 
+      - name: Create JSON command file for deployment
+        env:
+          IMAGE_TAG: ${{ steps.extract-image-tag.outputs.current_image_tag }}
+          DEPLOYMENT_NAME: ${{ env.DEPLOYMENT_NAME }}
+        run: |
+          COMMANDS_JSON=$(jq -n --arg image_tag "$IMAGE_TAG" \
+                                --arg deployment "$DEPLOYMENT_NAME" \
+            '{
+              commands: [
+              "export KUBECONFIG=/home/ec2-user/.kube/config",
+              "kubectl set image deployment/\($deployment) \($deployment)=\(${IMAGE_REPO}):\($image_tag)",
+              "kubectl rollout status deployment/\($deployment) -n default --timeout=60s"
+            ]
+          }')
+          
+          echo "$COMMANDS_JSON" > deploy-commands.json
+          cat deploy-commands.json
+
+      - name: Run SSM command using action
+        id: run-ssm-command
+        uses: ./.github/actions/ssm
+        with:
+          aws_account_id: ${{ secrets.AWS_ACCOUNT_ID }}
+          instance_id: ${{ steps.fetch-minikube-ec2-ip.outputs.instance_id }}
+          commands-file-name: deploy-commands.json
+          aws_region: ${{ env.AWS_REGION }}
+
+
+      
       # - name: Configure AWS Credentials
       #   uses: aws-actions/configure-aws-credentials@v3
       #   with:
@@ -68,29 +97,3 @@ jobs:
       #       --parameters commands=["export KUBECONFIG=/home/ec2-user/.kube/config","kubectl set image deployment/receipts-api receipts-api=ozblech/receipts-api:$IMAGE_TAG"] \
       #       --cloud-watch-output-config CloudWatchOutputEnabled=true \
       #       --output text
-
-      - name: Create JSON command file
-        env:
-          IMAGE_TAG: ${{ steps.extract-image-tag.outputs.current_image_tag }}
-          DEPLOYMENT_NAME: ${{ env.DEPLOYMENT_NAME }}
-        run: |
-          COMMANDS_JSON=$(jq -n --arg image_tag "$IMAGE_TAG" \
-                                --arg deployment "$DEPLOYMENT_NAME" \
-            '{
-              commands: [
-              "export KUBECONFIG=/home/ec2-user/.kube/config",
-              "kubectl set image deployment/\($deployment) \($deployment)=ozblech/\($deployment):\($image_tag)"
-            ]
-          }')
-          
-          echo "$COMMANDS_JSON" > deploy-commands.json
-          cat deploy-commands.json
-
-      - name: Run SSM command using action
-        id: run-ssm-command
-        uses: ./.github/actions/ssm
-        with:
-          aws_account_id: ${{ secrets.AWS_ACCOUNT_ID }}
-          instance_id: ${{ steps.fetch-minikube-ec2-ip.outputs.instance_id }}
-          commands-file-name: deploy-commands.json
-          aws_region: ${{ env.AWS_REGION }}
