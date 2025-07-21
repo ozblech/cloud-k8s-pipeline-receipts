@@ -57,10 +57,11 @@ jobs:
         run: |
           COMMANDS_JSON=$(jq -n --arg image_tag "$IMAGE_TAG" \
                                 --arg deployment "$DEPLOYMENT_NAME" \
+                                --arg image_repo "${IMAGE_REPO}" \
             '{
               commands: [
               "export KUBECONFIG=/home/ec2-user/.kube/config",
-              "kubectl set image deployment/\($deployment) \($deployment)=\(${IMAGE_REPO}):\($image_tag)",
+              "kubectl set image deployment/\($deployment) \($deployment)=\(${image_repo}):\($image_tag)",
               "kubectl rollout status deployment/\($deployment) -n default --timeout=60s"
             ]
           }')
