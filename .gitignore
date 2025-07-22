@@ -29,3 +29,6 @@ receipts_project/kubernetes/instructions*
 # Ignore __pycache__ directories
 **/__pycache__/
 
+# Ignore .pgpass file
+*.pgpass
+
