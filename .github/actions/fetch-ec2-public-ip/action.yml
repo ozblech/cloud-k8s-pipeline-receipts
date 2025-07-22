@@ -8,6 +8,9 @@ inputs:
   aws_account_id:
     description: "AWS Account ID to construct the role ARN"
     required: true
+  aws_region:
+    description: "AWS Region where the EC2 instance is located"
+    required: true
 
 outputs:
   public_dns:
@@ -27,7 +30,7 @@ runs:
       uses: aws-actions/configure-aws-credentials@v2
       with:
         role-to-assume: "arn:aws:iam::${{ inputs.aws_account_id }}:role/github-actions-role"
-        aws-region: us-west-2
+        aws-region: ${{ inputs.aws_region }}
 
     - name: Fetch EC2 public IP and instance ID
       id: fetch-ec2-ip-and-instance-id
@@ -38,14 +41,19 @@ runs:
                     "Name=instance-state-name,Values=running" \
             --query "Reservations[0].Instances[0].PublicDnsName" \
             --output text)
-          echo "public_dns=$dns"
-          echo "public_dns=$dns" >> "$GITHUB_OUTPUT"
+
+          if [ "$dns" == "None" ] || [ -z "$dns" ]; then
+            echo "❌ No running EC2 instance found with tag: ${{ inputs.tag_name }}"
+            exit 1
+          fi
           
           id=$(aws ec2 describe-instances \
           --filters "Name=tag:Name,Values=${{ inputs.tag_name }}" \
                     "Name=instance-state-name,Values=running" \
           --query "Reservations[0].Instances[0].InstanceId" \
           --output text)
-          echo "instance_id=$id"
+
+          echo "✅ Found EC2 instance: $id ($dns)"
+          echo "public_dns=$dns" >> "$GITHUB_OUTPUT"
           echo "instance_id=$id" >> "$GITHUB_OUTPUT"
           

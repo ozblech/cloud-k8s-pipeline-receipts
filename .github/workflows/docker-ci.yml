@@ -8,7 +8,7 @@ on:
       - '.github/**'
   
 permissions:
-  contents: write # Needed to push Git tags
+  contents: write # Needed to push version tags to remote repo
 
 jobs:
   

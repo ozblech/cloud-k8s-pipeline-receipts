@@ -35,6 +35,7 @@ jobs:
         with:
           tag_name: minikube-ec2
           aws_account_id: ${{ secrets.AWS_ACCOUNT_ID }}
+          aws_region: ${{ env.AWS_REGION }}
 
       - name: Get latest Git tag
         if: ${{ github.event.inputs.revision == '' }}

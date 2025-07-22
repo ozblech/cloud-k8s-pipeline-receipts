@@ -9,17 +9,16 @@ on:
     workflows: ["CI - Docker Build & Push and Tag"]
     types:
       - completed
+env:
+  IMAGE_REPO: ozblech/receipts-api
+  DEPLOYMENT_NAME: receipts-api
+  AWS_REGION: us-west-2
 
 jobs:
   deploy:
     name: Deploy to EC2 Minikube
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
-    env:
-      IMAGE_REPO: ozblech/receipts-api
-      DEPLOYMENT_NAME: receipts-api
-      AWS_REGION: us-west-2
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -29,16 +28,12 @@ jobs:
       - name: Get latest Git tag
         id: extract-image-tag
         uses: ./.github/actions/extract-image-tag
-
-      # - name: Setup SSH key
-      #   run: |
-      #     echo "${{ secrets.EC2_SSH_KEY }}" > ec2_key.pem
-      #     chmod 600 ec2_key.pem
     
-      - name: echo current image tag and minikube IP
+      - name: echo current image tag and minikube IP and set env
         run: |
             echo "Current image tag: ${{ steps.extract-image-tag.outputs.current_image_tag }}"
             echo "Current version: ${{ steps.extract-image-tag.outputs.current_version }}"
+            echo "IMAGE_TAG=${{ steps.extract-image-tag.outputs.current_image_tag }}" >> $GITHUB_ENV
 
       - name: Fetch EC2 public IP
         id: fetch-minikube-ec2-ip
@@ -46,14 +41,12 @@ jobs:
         with:
           tag_name: minikube-ec2
           aws_account_id: ${{ secrets.AWS_ACCOUNT_ID }}
+          aws_region: ${{ env.AWS_REGION }}
 
       - name: Print DNS
         run: echo "DNS is ${{ steps.fetch-minikube-ec2-ip.outputs.public_dns }}"
 
       - name: Create JSON command file for deployment
-        env:
-          IMAGE_TAG: ${{ steps.extract-image-tag.outputs.current_image_tag }}
-          DEPLOYMENT_NAME: ${{ env.DEPLOYMENT_NAME }}
         run: |
           COMMANDS_JSON=$(jq -n \
             --arg image_tag "$IMAGE_TAG" \
@@ -63,7 +56,8 @@ jobs:
               commands: [
                 "export KUBECONFIG=/home/ec2-user/.kube/config",
                 "kubectl set image deployment/\($deployment) \($deployment)=\($image_repo):\($image_tag)",
-                "kubectl rollout status deployment/\($deployment) -n default --timeout=60s"
+                "kubectl rollout status deployment/\($deployment) -n default --timeout=60s || (echo 'Rollout failed' && exit 1)",
+                "kubectl label deployment/\($deployment) version=\($image_tag) --overwrite"
               ]
             }')
 
