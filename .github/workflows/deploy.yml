@@ -56,7 +56,7 @@ jobs:
               commands: [
                 "export KUBECONFIG=/home/ec2-user/.kube/config",
                 "kubectl set image deployment/\($deployment) \($deployment)=\($image_repo):\($image_tag)",
-                "kubectl rollout status deployment/\($deployment) -n default --timeout=60s || (echo 'Rollout failed' && exit 1)",
+                "kubectl rollout status deployment/\($deployment) -n default --timeout=60s || (echo \"Rollout failed\" && exit 1)",
                 "kubectl label deployment/\($deployment) version=\($image_tag) --overwrite"
               ]
             }')
