@@ -51,9 +51,7 @@ systemctl restart postgresql
 # 9. Show final service status
 systemctl status postgresql
 
-#export PGPASSWORD="VeryStrongPassword123!"
-chmod 600 ~/.pgpass
-export PGPASSFILE=~/.pgpass
+export PGPASSWORD="VeryStrongPassword123!"
 # Wait until Postgres is up
 until psql -U receipts_user -d receipts -h localhost -c '\q'; do
   echo "Waiting for PostgreSQL to be ready..."
