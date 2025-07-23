@@ -16,6 +16,9 @@ resource "aws_subnet" "public_subnets" {
     cidr_block                      = var.public_subnet_cidrs[count.index]
     map_public_ip_on_launch         = true
     availability_zone               = var.aws_availability_zones[count.index]
+    tags = {
+        Name = "public_subnet_${count.index + 1}"
+    }
 }
 
 resource "aws_subnet" "private_subnets" {
@@ -23,6 +26,9 @@ resource "aws_subnet" "private_subnets" {
     vpc_id                          = aws_vpc.my_vpc.id
     cidr_block                      = var.private_subnet_cidrs[count.index]
     availability_zone               = var.aws_availability_zones[count.index]
+    tags = {
+        Name = "private_subnet_${count.index + 1}"
+    }
 }
 
 // Internet gateway
@@ -39,7 +45,7 @@ resource "aws_route_table" "public_rt" {
         gateway_id = aws_internet_gateway.my_igw.id
     }
     tags = {
-        Name: "my-route-table"
+        Name: "public-route-table"
     }
 
 }

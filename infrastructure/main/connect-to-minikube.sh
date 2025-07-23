@@ -1,4 +1,5 @@
-set -e
+# set -o pipefail
+#set -e
 
 EC2_USER=ec2-user
 EC2_IP=$(terraform output -raw minikube_ec2_public_ip)
@@ -90,7 +91,19 @@ kubectl get nodes || echo "❌ Failed to connect to Minikube. Check your SSH tun
 
 # Helm install all charts in receipts_project/helm
 echo "🔄 Installing Helm charts..."
-helm install receipts-api ../../receipts_project/helm_chart -f ../../receipts_project/helm_chart/values.yaml -f ../../receipts_project/helm_chart/values-secret.yaml
+helm upgrade --install receipts-api ../../receipts_project/helm_chart -f ../../receipts_project/helm_chart/values.yaml -f ../../receipts_project/helm_chart/values-secret.yaml
+
+# Wait for Prometheus to be ready
+echo "⏳ Waiting for Prometheus pod to be Running..."
+until kubectl get pod -n monitoring -l app.kubernetes.io/name=prometheus -o jsonpath='{.items[0].status.phase}' | grep -q "Running"; do
+  echo "⌛ Still waiting..."
+  sleep 5
+done
+
+# 🚪 Port-forward port 9090 for prometheus service
+echo "🔗 Port-forwarding Prometheus service on port 9090..."
+kubectl port-forward svc/kube-prometheus-stack-prometheus 9090:9090 -n monitoring &
+
 
 # Run this script with: source connect-to-minikube.sh
 # so that the KUBECONFIG variable is set in the current shell session.

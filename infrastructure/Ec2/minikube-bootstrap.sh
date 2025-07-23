@@ -55,3 +55,52 @@ done
 
 # Install Helm
 curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+
+############### Prometheus Operator Setup ###############
+# Deploy Prometheus Operator using Helm
+runuser -l ec2-user -c '
+  helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+  helm repo update
+
+  helm install kube-prometheus-stack prometheus-community/kube-prometheus-stack \
+    --namespace monitoring \
+    --create-namespace
+'
+
+# Wait for Prometheus pods to be ready
+runuser -l ec2-user -c '
+  echo "Waiting for Prometheus components to be ready..."
+  kubectl wait --namespace monitoring \
+    --for=condition=Ready pod \
+    --selector=app.kubernetes.io/instance=kube-prometheus-stack \
+    --timeout=180s
+'
+
+# Apply ServiceMonitor to monitor Minikube components
+runuser -l ec2-user -c '
+  cat <<EOF | kubectl apply -f -
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: kubelet
+  namespace: monitoring
+spec:
+  selector:
+    matchLabels:
+      component: kubelet
+  namespaceSelector:
+    matchNames:
+      - kube-system
+  endpoints:
+  - port: http-metrics
+    interval: 15s
+EOF
+'
+
+# Verify Prometheus is scraping metrics
+runuser -l ec2-user -c '
+  echo "Prometheus targets:"
+  kubectl port-forward -n monitoring svc/kube-prometheus-stack-prometheus 9090:9090 &
+  sleep 5
+  curl -s http://localhost:9090/api/v1/targets | jq ".data.activeTargets[] | {job: .labels.job, health: .health}" || echo "Target check failed"
+  pkill -f "kubectl port-forward"
