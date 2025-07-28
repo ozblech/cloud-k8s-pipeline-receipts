@@ -49,11 +49,10 @@ runs:
           --output text)
 
           echo "Waiting for command to complete..."
-          aws ssm wait command-executed \
-          --command-id "$COMMAND_ID" \
-          --instance-id "$INSTANCE_ID" \
-          --region "$AWS_REGION" \
-          --timeout 600
+          timeout 200 aws ssm wait command-executed \
+            --command-id "$COMMAND_ID" \
+            --instance-id "$INSTANCE_ID" \
+            --region "$AWS_REGION"
           
           echo "Fetching command output..."
           COMMAND_OUTPUT=$(aws ssm get-command-invocation \
