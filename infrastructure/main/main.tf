@@ -38,12 +38,5 @@ module "ec2" {
 module "s3" {
   source = "../S3"
   s3_bucket_name = var.s3_bucket_name
+  minikube_role_arn  = module.iam.minikube_role_arn
 }
-
-
-
-
-
-
-
-

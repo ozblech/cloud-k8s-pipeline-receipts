@@ -52,7 +52,8 @@ runs:
           aws ssm wait command-executed \
           --command-id "$COMMAND_ID" \
           --instance-id "$INSTANCE_ID" \
-          --region "$AWS_REGION"
+          --region "$AWS_REGION" \
+          --timeout 600
           
           echo "Fetching command output..."
           COMMAND_OUTPUT=$(aws ssm get-command-invocation \
@@ -63,10 +64,10 @@ runs:
             --output text)
 
           echo "---- RAW OUTPUT ----"
-          echo "$COMMAND_OUTPUT"
+          echo "::add-mask::$COMMAND_OUTPUT"
           echo "--------------------"
           echo "command_output<<EOF" >> "$GITHUB_OUTPUT"
-          echo "$COMMAND_OUTPUT" >> "$GITHUB_OUTPUT"
+          echo "::add-mask::$COMMAND_OUTPUT" >> "$GITHUB_OUTPUT"
           echo "EOF" >> "$GITHUB_OUTPUT"
 
           echo "command_id=$COMMAND_ID" >> "$GITHUB_OUTPUT"
