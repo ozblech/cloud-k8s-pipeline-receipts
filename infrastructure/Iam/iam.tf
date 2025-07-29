@@ -84,18 +84,32 @@ resource "aws_iam_role_policy" "github_actions_policy" {
     Version = "2012-10-17",
     Statement = [
       {
+        Sid: "AllowSSMSendCommandOnlyToTaggedInstances",
         Effect: "Allow",
         Action: [
-          "ssm:SendCommand",
-          "ssm:ListCommands",
+          "ssm:SendCommand"
+        ],
+        Resource: "arn:aws:ssm:${var.region}::document/AWS-RunShellScript",
+        Condition: {
+          "StringEquals": {
+            "ssm:ResourceTag/Name": var.minikube_ec2_tag_name
+          }
+        }
+      },
+      {
+        Sid: "AllowSSMDescribeAndGet",
+        Effect: "Allow",
+        Action: [
           "ssm:GetCommandInvocation",
+          "ssm:ListCommands",
+          "ssm:ListCommandInvocations",
           "ssm:GetDocument",
-          "ssm:DescribeDocument",
-          "ssm:ListCommandInvocations"
+          "ssm:DescribeDocument"
         ],
         Resource: "*"
       },
       {
+        Sid: "AllowEC2Describe",
         Effect: "Allow",
         Action: "ec2:DescribeInstances",
         Resource: "*"

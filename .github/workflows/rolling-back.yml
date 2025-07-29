@@ -18,7 +18,7 @@ jobs:
     env:
       IMAGE_REPO: ozblech/receipts-api
       DEPLOYMENT_NAME: receipts-api
-      AWS_REGION: us-west-2
+      AWS_REGION: ${{ secrets.AWS_REGION }}
 
     steps:
       - name: Checkout repository
@@ -171,6 +171,6 @@ jobs:
       #         "kubectl rollout status deployment/${DEPLOYMENT_NAME} -n default"
       #       ]' \
       #       --cloud-watch-output-config CloudWatchOutputEnabled=true \
-      #       --region us-west-2 \
+      #       --region ${{ secrets.AWS_REGION }} \
       #       --output text
 

@@ -3,3 +3,12 @@ variable "github_repo" {
   type        = string
 }
 
+variable "minikube_ec2_tag_name" {
+  description = "Tag name for the Minikube EC2 instance"
+  type        = string
+}
+
+variable "region" {
+  description = "AWS region where resources will be created"
+  type        = string
+}

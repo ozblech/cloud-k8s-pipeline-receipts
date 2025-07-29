@@ -1,6 +1,8 @@
 provider "aws" {
   region = "us-west-2"
-}resource "aws_s3_bucket" "terraform_state" {
+}
+
+resource "aws_s3_bucket" "terraform_state" {
   bucket = "my-terraform-state-bucket-receipts-app-oz"
 
   lifecycle {

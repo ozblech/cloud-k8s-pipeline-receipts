@@ -12,7 +12,7 @@ on:
 env:
   IMAGE_REPO: ozblech/receipts-api
   DEPLOYMENT_NAME: receipts-api
-  AWS_REGION: us-west-2
+  AWS_REGION: ${{ secrets.AWS_REGION }}  # Ensure this is set in your repository secrets
 
 jobs:
   deploy:
@@ -79,7 +79,7 @@ jobs:
       #   uses: aws-actions/configure-aws-credentials@v3
       #   with:
       #     role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-actions-role
-      #     aws-region: us-west-2
+      #     aws-region: ${{ secrets.AWS_REGION }}
 
       # - name: Deploy via SSM to EC2
       #   env:

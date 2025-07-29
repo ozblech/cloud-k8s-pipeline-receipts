@@ -6,7 +6,7 @@ terraform {
   backend "s3" {
     bucket         = "my-terraform-state-bucket-receipts-app-oz"  # same name as above
     key            = "env/dev/terraform.tfstate"                  # path inside the bucket
-    region         = "us-west-2"                                  # change as needed
+    region         = "us-west-2"                                # change as needed
     dynamodb_table = "terraform-locks"                            # same name as above
     encrypt        = true
   }
