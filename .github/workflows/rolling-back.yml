@@ -91,7 +91,7 @@ jobs:
         run: |
           jq -n --arg d "$DEPLOYMENT_NAME" \
                 --arg kubeconfig_path "${{ vars.KUBECONFIG_PATH }}" \
-            {
+            '{
             "commands": [
               "#!/bin/bash",
               "export KUBECONFIG=\($kubeconfig_path)",
