@@ -55,7 +55,7 @@ jobs:
             '{
               commands: [
                 "export KUBECONFIG=/home/ec2-user/.kube/config",
-                "helm upgrade --install \($deployment) ./receipts_project/helm_chart --set image.repository=\($image_repo) --set image.tag=\($image_tag)",
+                "kubectl set image deployment/\($deployment) \($deployment)=\($image_repo):\($image_tag)",
                 "kubectl rollout status deployment/\($deployment) -n default --timeout=60s || (echo \"Rollout failed\" && exit 1)",
                 "kubectl label deployment/\($deployment) version=\($image_tag) --overwrite"
               ]
@@ -73,8 +73,6 @@ jobs:
           commands-file-name: deploy-commands.json
           aws_region: ${{ env.AWS_REGION }}
 
-
-      # "kubectl set image deployment/\($deployment) \($deployment)=\($image_repo):\($image_tag)",
 
 
       # - name: Configure AWS Credentials
