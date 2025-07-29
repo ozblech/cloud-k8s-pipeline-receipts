@@ -95,7 +95,7 @@ jobs:
             "commands": [
               "#!/bin/bash",
               "export KUBECONFIG=\($kubeconfig_path)",
-              "kubectl get deployment/\($d) -o jsonpath={.spec.template.spec.containers[0].image} -n default"
+              "echo $(kubectl get deployment/\($d) -o jsonpath='{.spec.template.spec.containers[0].image}' -n default)"
             ]
           }' > verify-image-command.json
 
