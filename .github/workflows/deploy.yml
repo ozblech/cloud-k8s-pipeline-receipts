@@ -54,13 +54,13 @@ jobs:
             --arg image_repo "$IMAGE_REPO" \
             '{
               commands: [
-                "export KUBECONFIG=/home/ec2-user/.kube/config",
-                "echo \"Cleaning up old Docker images...\"",
-                "runuser -l ec2-user -c \"minikube ssh -- docker system prune -a -f\"",
+                "export KUBECONFIG=/home/ec2-user/.kube/config",             
                 "echo \"Deploying new Docker image...\"",
                 "kubectl set image deployment/\($deployment) \($deployment)=\($image_repo):\($image_tag)",
                 "kubectl rollout status deployment/\($deployment) -n default --timeout=60s || (echo \"Rollout failed\" && exit 1)",
-                "kubectl label deployment/\($deployment) version=\($image_tag) --overwrite"
+                "kubectl label deployment/\($deployment) version=\($image_tag) --overwrite",
+                "echo \"Cleaning up old Docker images...\"",
+                "runuser -l ec2-user -c \"minikube ssh -- docker system prune -a -f\"",
               ]
             }')
 
