@@ -60,9 +60,9 @@ jobs:
           jq -n --arg r "$REVISION_INPUT" \
                 --arg p "$PREVIOUS_IMAGE_TAG" \
                 --arg d "$DEPLOYMENT_NAME" \
-                --arg i "$IMAGE_REPO" ' \
+                --arg i "$IMAGE_REPO" \
                 --arg kubeconfig_path "$KUBECONFIG_PATH" \
-          {
+          '{
             commands: [
               "#!/bin/bash",
               "export KUBECONFIG=\($kubeconfig_path)",
