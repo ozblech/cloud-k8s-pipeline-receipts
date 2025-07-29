@@ -76,6 +76,8 @@ resource "aws_iam_role" "github_actions_role" {
   })
 }
 
+data "aws_caller_identity" "current" {}
+
 resource "aws_iam_role_policy" "github_actions_policy" {
   name = "github-actions-policy"
   role = aws_iam_role.github_actions_role.id
@@ -84,17 +86,18 @@ resource "aws_iam_role_policy" "github_actions_policy" {
     Version = "2012-10-17",
     Statement = [
       {
-        Sid: "AllowSSMSendCommandOnlyToTaggedInstances",
+        Sid: "AllowSendCommandToInstance",
         Effect: "Allow",
-        Action: [
-          "ssm:SendCommand"
-        ],
-        Resource: "arn:aws:ssm:${var.region}::document/AWS-RunShellScript",
-        Condition: {
-          "StringEquals": {
-            "ssm:ResourceTag/Name": var.minikube_ec2_tag_name
-          }
-        }
+        Action: "ssm:SendCommand",
+        Resource: [
+          "arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:instance/${var.minikube_ec2_id}"
+        ]
+      },
+      {
+        Sid: "AllowRunShellScriptDocument",
+        Effect: "Allow",
+        Action: "ssm:SendCommand",
+        Resource: "arn:aws:ssm:${var.region}::document/AWS-RunShellScript"
       },
       {
         Sid: "AllowSSMDescribeAndGet",

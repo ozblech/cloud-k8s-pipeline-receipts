@@ -14,6 +14,7 @@ module "iam" {
   source = "../Iam"
   github_repo = var.github_repo
   minikube_ec2_tag_name = module.ec2.minikube_ec2_tag_name
+  minikube_ec2_id = module.ec2.minikube_ec2_id
   region = var.region
 }
 
