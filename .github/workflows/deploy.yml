@@ -55,7 +55,7 @@ jobs:
             '{
               commands: [
                 "export KUBECONFIG=/home/ec2-user/.kube/config",
-                "helm upgrade --install \($deployment) ./helm/\($deployment) --set image.repository=\($image_repo) --set image.tag=\($image_tag)",
+                "helm upgrade --install \($deployment) ./receipts_project/helm_chart --set image.repository=\($image_repo) --set image.tag=\($image_tag)",
                 "kubectl rollout status deployment/\($deployment) -n default --timeout=60s || (echo \"Rollout failed\" && exit 1)",
                 "kubectl label deployment/\($deployment) version=\($image_tag) --overwrite"
               ]
