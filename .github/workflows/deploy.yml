@@ -55,9 +55,9 @@ jobs:
             '{
               commands: [
                 "export KUBECONFIG=/home/ec2-user/.kube/config",
-                "echo "cleaning up old Docker images on minikube instance",
+                "echo \"Cleaning up old Docker images...\"",
                 "minikube ssh -- docker system prune -a -f",
-                "echo "Deploying new image to Kubernetes",
+                "echo \"Deploying new Docker image...\"",
                 "kubectl set image deployment/\($deployment) \($deployment)=\($image_repo):\($image_tag)",
                 "kubectl rollout status deployment/\($deployment) -n default --timeout=60s || (echo \"Rollout failed\" && exit 1)",
                 "kubectl label deployment/\($deployment) version=\($image_tag) --overwrite"
