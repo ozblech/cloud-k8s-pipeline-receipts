@@ -16,8 +16,8 @@ jobs:
   rollback:
     runs-on: ubuntu-latest
     env:
-      IMAGE_REPO: ozblech/receipts-api
-      DEPLOYMENT_NAME: receipts-api
+      IMAGE_REPO: ${{ vars.IMAGE_REPO }}              # e.g., ozblech/receipts-api
+      DEPLOYMENT_NAME: ${{ vars.DEPLOYMENT_NAME }}   # e.g., receipts-api
       AWS_REGION: ${{ secrets.AWS_REGION }}
 
     steps:
@@ -33,7 +33,7 @@ jobs:
         id: fetch-minikube-ec2-ip
         uses: ./.github/actions/fetch-ec2-public-ip
         with:
-          tag_name: minikube-ec2
+          tag_name: ${{ vars.MINIKUBE_EC2_TAG_NAME }}       # e.g., minikube-ec2
           aws_account_id: ${{ secrets.AWS_ACCOUNT_ID }}
           aws_region: ${{ env.AWS_REGION }}
 
@@ -55,18 +55,20 @@ jobs:
           PREVIOUS_IMAGE_TAG: ${{ steps.get-latest-tag.outputs.previous_image_tag }}
           DEPLOYMENT_NAME: ${{ env.DEPLOYMENT_NAME }}
           IMAGE_REPO: ${{ env.IMAGE_REPO }}
+          KUBECONFIG_PATH: ${{ vars.KUBECONFIG_PATH }}
         run: |
           jq -n --arg r "$REVISION_INPUT" \
                 --arg p "$PREVIOUS_IMAGE_TAG" \
                 --arg d "$DEPLOYMENT_NAME" \
-                --arg i "$IMAGE_REPO" '
+                --arg i "$IMAGE_REPO" ' \
+                --arg kubeconfig_path "$KUBECONFIG_PATH" \
           {
             commands: [
               "#!/bin/bash",
-              "export KUBECONFIG=/home/ec2-user/.kube/config",
+              "export KUBECONFIG=\($kubeconfig_path)",
               (if $r == "" then
                 "echo \"Rolling back to previous image tag: \($p)\"",
-                "kubectl set image deployment/\($d) receipts-api=\($i):\($p) -n default"
+                "kubectl set image deployment/\($d) \($d)=\($i):\($p) -n default"
               else
                 "echo \"Rolling back to revision: \($r)\"",
                 "kubectl rollout undo deployment/\($d) --to-revision=\($r) -n default"
@@ -87,12 +89,13 @@ jobs:
 
       - name: Generate command file to verify image
         run: |
-          jq -n --arg d "$DEPLOYMENT_NAME" '
+          jq -n --arg d "$DEPLOYMENT_NAME" \
+                --arg kubeconfig_path "${{ vars.KUBECONFIG_PATH }}" \
             {
             "commands": [
               "#!/bin/bash",
-              "export KUBECONFIG=/home/ec2-user/.kube/config",
-              "echo $(kubectl get deployment/receipts-api -o jsonpath='{.spec.template.spec.containers[0].image}' -n default)"
+              "export KUBECONFIG=\($kubeconfig_path)",
+              "kubectl get deployment/\($d) -o jsonpath={.spec.template.spec.containers[0].image} -n default"
             ]
           }' > verify-image-command.json
 

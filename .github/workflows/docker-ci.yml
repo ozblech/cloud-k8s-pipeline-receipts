@@ -87,7 +87,7 @@ jobs:
         
       - name: Debug pushed image reference
         run: | 
-          echo "Pushing tag: ${{ secrets.DOCKERHUB_USERNAME }}/receipts-api:${{ needs.bump-version.outputs.new_image_tag }}"
+          echo "Pushing tag: ${{ secrets.DOCKERHUB_USERNAME }}/${{ vars.DEPLOYMENT_NAME }}:${{ needs.bump-version.outputs.new_image_tag }}"
         
 
       - name: Build and push Docker image
@@ -96,7 +96,7 @@ jobs:
           context: ./receipts_project
           file: ./receipts_project/Dockerfile
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/receipts-api:${{ needs.bump-version.outputs.new_image_tag }}
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/${{ vars.DEPLOYMENT_NAME }}:${{ needs.bump-version.outputs.new_image_tag }}
 
   push-version-tag:
     runs-on: ubuntu-latest
