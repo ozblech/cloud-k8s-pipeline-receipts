@@ -108,31 +108,18 @@ jobs:
           aws_region: ${{ env.AWS_REGION }}
           commands-file-name: verify-image-command.json
 
-      - name: Debug to file
-        run: |
-          DEPLOYED_IMAGE="${{ steps.verify-rollback.outputs.command_output }}"
-          echo "RAW: $DEPLOYED_IMAGE" | tee deployed.txt
-
-          EXPECTED_IMAGE="${{ env.IMAGE_REPO }}:${{ steps.get-latest-tag.outputs.previous_image_tag }}"
-          echo "EXPECTED: $EXPECTED_IMAGE" | tee expected.txt
-
-          echo "Contents of deployed.txt:"
-          cat deployed.txt
-
-          echo "Contents of expected.txt:"
-          cat expected.txt
-          
       - name: Parse and compare rollback result
         if: ${{ github.event.inputs.revision == '' }}
         run: |
           DEPLOYED_IMAGE="${{ steps.verify-rollback.outputs.command_output }}"
           EXPECTED_IMAGE="${{ env.IMAGE_REPO }}:${{ steps.get-latest-tag.outputs.previous_image_tag }}"
 
-          echo "✅ Retrieved deployed image: $DEPLOYED_IMAGE"
-          echo "🔄 Expecting image: $EXPECTED_IMAGE"
+          DEPLOYED_TAG=$(echo "$DEPLOYED_IMAGE" | awk -F: '{print $2}')
+          EXPECTED_TAG=$(echo "$EXPECTED_IMAGE" | awk -F: '{print $2}')
 
-          echo "::notice::Deployed: $DEPLOYED_IMAGE"
-          echo "::notice::Expected: $EXPECTED_IMAGE"
+          echo "✅ Retrieved deployed image: $DEPLOYED_TAG"
+          echo "🔄 Expecting image: $EXPECTED_TAG"
+
 
           if [[ "$DEPLOYED_IMAGE" != "$EXPECTED_IMAGE" ]]; then
             echo "❌ Rollback verification failed: Deployed image does not match expected."
