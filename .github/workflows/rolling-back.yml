@@ -108,13 +108,20 @@ jobs:
           aws_region: ${{ env.AWS_REGION }}
           commands-file-name: verify-image-command.json
 
-      - name: Debug output
+      - name: Debug to file
         run: |
-          echo "Command output: ${{ steps.verify-rollback.outputs.command_output }}" > image.txt
-          cat image.txt
-          echo "Previous image tag: ${{ steps.get-latest-tag.outputs.previous_image_tag }}" > expected.txt
-          cat expected.txt
+          DEPLOYED_IMAGE="${{ steps.verify-rollback.outputs.command_output }}"
+          echo "RAW: $DEPLOYED_IMAGE" | tee deployed.txt
 
+          EXPECTED_IMAGE="${{ env.IMAGE_REPO }}:${{ steps.get-latest-tag.outputs.previous_image_tag }}"
+          echo "EXPECTED: $EXPECTED_IMAGE" | tee expected.txt
+
+          echo "Contents of deployed.txt:"
+          cat deployed.txt
+
+          echo "Contents of expected.txt:"
+          cat expected.txt
+          
       - name: Parse and compare rollback result
         if: ${{ github.event.inputs.revision == '' }}
         run: |
