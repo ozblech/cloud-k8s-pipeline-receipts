@@ -113,6 +113,9 @@ jobs:
         run: |
           DEPLOYED_IMAGE="${{ steps.verify-rollback.outputs.command_output }}"
           EXPECTED_IMAGE="${{ env.IMAGE_REPO }}:${{ steps.get-latest-tag.outputs.previous_image_tag }}"
+          
+          echo "::remove-mask::$DEPLOYED_IMAGE"
+          echo "::remove-mask::$EXPECTED_IMAGE"
 
           echo "✅ Retrieved deployed image: $DEPLOYED_IMAGE"
           echo "🔄 Expecting image: $EXPECTED_IMAGE"
