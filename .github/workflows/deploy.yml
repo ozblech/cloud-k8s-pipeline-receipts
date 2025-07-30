@@ -46,7 +46,7 @@ jobs:
       - name: Print DNS
         run: echo "DNS is ${{ steps.fetch-minikube-ec2-ip.outputs.public_dns }}"
 
-      - name: Create JSON command file for deployment
+      - name: Create JSON command file for deployment + remove old images
         run: |
           COMMANDS_JSON=$(jq -n \
             --arg image_tag "$IMAGE_TAG" \
