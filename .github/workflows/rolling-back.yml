@@ -114,11 +114,8 @@ jobs:
           DEPLOYED_IMAGE="${{ steps.verify-rollback.outputs.command_output }}"
           EXPECTED_IMAGE="${{ env.IMAGE_REPO }}:${{ steps.get-latest-tag.outputs.previous_image_tag }}"
 
-          DEPLOYED_TAG=$(echo "$DEPLOYED_IMAGE" | awk -F: '{print $2}')
-          EXPECTED_TAG=$(echo "$EXPECTED_IMAGE" | awk -F: '{print $2}')
-
-          echo "✅ Retrieved deployed image: $DEPLOYED_TAG"
-          echo "🔄 Expecting image: $EXPECTED_TAG"
+          echo "✅ Retrieved deployed image: $DEPLOYED_IMAGE"
+          echo "🔄 Expecting image: $EXPECTED_IMAGE"
 
 
           if [[ "$DEPLOYED_IMAGE" != "$EXPECTED_IMAGE" ]]; then
