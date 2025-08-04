@@ -20,7 +20,7 @@ jobs:
         (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
         github.event_name == 'workflow_dispatch'
     outputs:
-      new_image_tag: ${{ steps.bump-version.outputs.new_image_tag }}
+      new_image_sha: ${{ steps.bump-version.outputs.new_image_sha }}
 
     steps:
       - name: Checkout source code
@@ -74,16 +74,15 @@ jobs:
         
       - name: Debug pushed image reference
         run: | 
-          echo "Pushing tag: ${{ secrets.DOCKERHUB_USERNAME }}/${{ vars.DEPLOYMENT_NAME }}:${{ needs.bump-version.outputs.new_image_tag }}"
+          echo "Pushing tag: ${{ secrets.DOCKERHUB_USERNAME }}/${{ vars.DEPLOYMENT_NAME }}:${{ needs.bump-version.outputs.new_image_sha }}"
         
-
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
           context: ./receipts_project
           file: ./receipts_project/Dockerfile
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/${{ vars.DEPLOYMENT_NAME }}:${{ needs.bump-version.outputs.new_image_tag }}
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/${{ vars.DEPLOYMENT_NAME }}:${{ needs.bump-version.outputs.new_image_sha }}
 
   # push-version-tag:
   #   runs-on: ubuntu-latest
