@@ -28,9 +28,6 @@ variable "ami_name_filter"{
   default = "al2023-ami-2023.*-x86_64"
 }
 
-variable "my_ip"{
-}
-
 variable "public_key_location"{
 }
 

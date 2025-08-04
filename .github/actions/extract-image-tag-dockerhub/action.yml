@@ -1,0 +1,26 @@
+name: Extract Image Tag from Docker Hub
+description: "Fetches the latest Docker image tag (short SHA) from Docker Hub"
+
+outputs:
+  current_image_sha:
+    description: "Current image tag (e.g., a1b2c3d)"
+    value: ${{ steps.extract.outputs.current_image_sha }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Fetch latest Docker tag (short SHA) from Docker Hub
+      id: fetch-latest-tag
+      shell: bash
+      run: |
+        IMAGE_REPO="${{ vars.IMAGE_REPO }}"
+        echo "Fetching tags for $IMAGE_REPO from Docker Hub..."
+
+        TAG=$(curl -s "https://registry.hub.docker.com/v2/repositories/${IMAGE_REPO}/tags?page_size=100" \
+          | jq -r '.results[].name' \
+          | grep -E '^[a-f0-9]{7}$' \
+          | sort -r \
+          | head -n1)
+
+        echo "Latest short SHA tag is: $TAG"
+        echo "current_image_sha=$TAG" >> "$GITHUB_OUTPUT"

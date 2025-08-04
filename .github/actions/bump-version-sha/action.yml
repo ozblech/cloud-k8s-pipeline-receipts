@@ -1,0 +1,21 @@
+name: Bump Version
+description: "Bumps the version based on the new short SHA"
+
+outputs:
+  new_image_sha:
+    description: "Generated image tag (e.g., a1b2c3d)"
+    value: ${{ steps.extract.outputs.new_image_sha }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Extract SHA
+      id: extract
+      shell: bash
+      run: |
+        set -euo pipefail
+        echo "🔍 Getting current commit SHA..."
+        CURRENT_SHA=$(git rev-parse HEAD)
+        SHORT_SHA=$(git rev-parse --short HEAD)
+        echo "✅ New tag to bump: $SHORT_SHA"
+        echo "new_image_sha=$SHORT_SHA" >> "$GITHUB_OUTPUT"

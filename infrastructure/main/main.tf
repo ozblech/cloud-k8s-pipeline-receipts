@@ -1,3 +1,12 @@
+data "http" "my_ip" {
+  url = "https://ipv4.icanhazip.com"
+}
+
+locals {
+  my_ip = "${trim(data.http.my_ip.response_body, "\n")}/32"
+}
+
+
 // ------------------------
 // Modules
 // -------------------------
@@ -21,7 +30,7 @@ module "iam" {
 module "security_groups" {
   source = "../SecurityGroups"
   vpc_id             = module.vpc.vpc_id
-  my_ip              = var.my_ip
+  my_ip              = local.my_ip
 }
 
 module "ec2" {

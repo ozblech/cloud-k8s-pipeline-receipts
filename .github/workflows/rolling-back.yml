@@ -24,11 +24,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # - name: Setup SSH key
-      #   run: |
-      #     echo "${{ secrets.EC2_SSH_KEY }}" > ec2_key.pem
-      #     chmod 600 ec2_key.pem
-
       - name: Fetch EC2 public IP
         id: fetch-minikube-ec2-ip
         uses: ./.github/actions/fetch-ec2-public-ip
@@ -116,7 +111,6 @@ jobs:
 
           echo "✅ Retrieved deployed image: $DEPLOYED_IMAGE"
           echo "🔄 Expecting image: $EXPECTED_IMAGE"
-
 
           if [[ "$DEPLOYED_IMAGE" != "$EXPECTED_IMAGE" ]]; then
             echo "❌ Rollback verification failed: Deployed image does not match expected."
