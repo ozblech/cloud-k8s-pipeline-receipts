@@ -25,11 +25,12 @@ runs:
 
         RAW_JSON=$(curl -s "https://registry.hub.docker.com/v2/repositories/${IMAGE_REPO}/tags?page_size=100")
 
-        # Get the latest tag name (e.g., 2.0.15-ffc5a1a)
+        # Extract short SHA tags with their last pushed time
         TAG=$(echo "$RAW_JSON" \
-          | jq -r '.results[].name' \
+          | jq -r '.results[] | select(.name | test("^[a-f0-9]{7}$")) | "\(.tag_last_pushed) \(.name)"' \
           | sort -r \
-          | head -n1)
+          | head -n1 \
+          | awk '{print $2}')
 
         if [[ -z "$TAG" ]]; then
           echo "❌ No tags found."
