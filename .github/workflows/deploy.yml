@@ -10,7 +10,7 @@ on:
       image_tag:
         required: true
         type: string
-        
+
 env:
   IMAGE_REPO: ${{ vars.IMAGE_REPO }}              # e.g., ozblech/receipts-api
   DEPLOYMENT_NAME: ${{ vars.DEPLOYMENT_NAME }}    # e.g., receipts-api
@@ -19,7 +19,6 @@ env:
 jobs:
   deploy:
     name: Deploy to EC2 Minikube
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
