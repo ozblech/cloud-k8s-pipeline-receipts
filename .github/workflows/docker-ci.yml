@@ -29,6 +29,8 @@ jobs:
       - name: Check current image tag from dockerhub
         id: extract-image-tag-dockerhub
         uses: ./.github/actions/extract-image-tag-dockerhub
+        with:
+          image-repo: ${{ vars.IMAGE_REPO }}  # e.g., ozblech/receipts-api
 
       - name: Echo current image tag from dockerhub
         run: |

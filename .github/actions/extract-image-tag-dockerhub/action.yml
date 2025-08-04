@@ -1,6 +1,11 @@
 name: Extract Image Tag from Docker Hub
 description: "Fetches the latest Docker image tag (short SHA) from Docker Hub"
 
+inputs:
+  image-repo:
+    description: "Docker image repository (e.g., ozblech/receipts-api)"
+    required: true
+
 outputs:
   current_image_sha:
     description: "Current image tag (e.g., a1b2c3d)"
@@ -13,7 +18,7 @@ runs:
       id: fetch-latest-tag
       shell: bash
       run: |
-        IMAGE_REPO="${{ vars.IMAGE_REPO }}"
+        IMAGE_REPO="${{ inputs.image-repo }}"
         echo "Fetching tags for $IMAGE_REPO from Docker Hub..."
 
         TAG=$(curl -s "https://registry.hub.docker.com/v2/repositories/${IMAGE_REPO}/tags?page_size=100" \
