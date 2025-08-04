@@ -20,7 +20,7 @@ jobs:
         (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
         github.event_name == 'workflow_dispatch'
     outputs:
-      new_image_sha: ${{ steps.bump-version.outputs.new_image_sha }}
+      new_image_sha: ${{ steps.bump_sha.outputs.new_image_sha }}
 
     steps:
       - name: Checkout source code
@@ -37,16 +37,16 @@ jobs:
             echo "Current image tag from Docker Hub: ${{ steps.extract-image-tag-dockerhub.outputs.current_image_sha }}"
 
       - name: Bump version
-        id: bump-version
+        id: bump_sha
         uses: ./.github/actions/bump-version-sha
 
       - name: Echo new image tag
         run: |
-            echo "New image sha: ${{ steps.bump-version.outputs.new_image_sha }}"
+            echo "New image sha: ${{ steps.bump_sha.outputs.new_image_sha }}"
 
       - name: Fail if new image tag is the same as current
         run: |
-            if [ "${{ steps.bump-version.outputs.new_image_sha }}" == "${{ steps.extract-image-tag-dockerhub.outputs.current_image_sha }}" ]; then
+            if [ "${{ steps.bump_sha.outputs.new_image_sha }}" == "${{ steps.extract-image-tag-dockerhub.outputs.current_image_sha }}" ]; then
               echo "New image tag is the same as current. Failing the job."
               exit 1
             else
@@ -83,6 +83,14 @@ jobs:
           file: ./receipts_project/Dockerfile
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/${{ vars.DEPLOYMENT_NAME }}:${{ needs.bump-version.outputs.new_image_sha }}
+          
+  deploy:
+    needs: [bump-version, docker-build-push]
+    uses: ./.github/workflows/deploy.yml
+    with:
+      image_tag: ${{ needs.bump-version.outputs.new_image_sha }}
+    secrets: inherit
+
 
   # push-version-tag:
   #   runs-on: ubuntu-latest
