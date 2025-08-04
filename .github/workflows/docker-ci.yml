@@ -35,7 +35,6 @@ jobs:
       - name: Echo current image tag from dockerhub
         run: |
             echo "Current image tag from Docker Hub: ${{ steps.extract-image-tag-dockerhub.outputs.current_image_sha }}"
-            echo "CURRENT_IMAGE_SHA=${{ steps.extract-image-tag-dockerhub.outputs.current_image_sha }}" >> $GITHUB_ENV
 
       - name: Bump version
         id: bump-version
@@ -43,12 +42,11 @@ jobs:
 
       - name: Echo new image tag
         run: |
-            echo "New image tag: ${{ steps.bump-version.outputs.new_image_tag }}"
-            echo "New version: ${{ steps.bump-version.outputs.new_version }}"
+            echo "New image sha: ${{ steps.bump-version.outputs.new_image_sha }}"
 
       - name: Fail if new image tag is the same as current
         run: |
-            if [ "${{ steps.bump-version.outputs.new_image_tag }}" == "${{ steps.extract-image-tag-dockerhub.outputs.current_image_sha }}" ]; then
+            if [ "${{ steps.bump-version.outputs.new_image_sha }}" == "${{ steps.extract-image-tag-dockerhub.outputs.current_image_sha }}" ]; then
               echo "New image tag is the same as current. Failing the job."
               exit 1
             else
