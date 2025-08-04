@@ -18,14 +18,26 @@ runs:
       id: fetch-latest-tag
       shell: bash
       run: |
+        set -e
         IMAGE_REPO="${{ inputs.image-repo }}"
         echo "Fetching tags for $IMAGE_REPO from Docker Hub..."
 
-        TAG=$(curl -s "https://registry.hub.docker.com/v2/repositories/${IMAGE_REPO}/tags?page_size=100" \
+        RAW_JSON=$(curl -s "https://registry.hub.docker.com/v2/repositories/${IMAGE_REPO}/tags?page_size=100")
+        echo "RAW JSON from Docker Hub:"
+        echo "$RAW_JSON"
+
+        echo "$RAW_JSON" | jq -r '.results[].name'
+
+        TAG=$(echo "$RAW_JSON" \
           | jq -r '.results[].name' \
           | grep -E '^[a-f0-9]{7}$' \
           | sort -r \
           | head -n1)
 
-        echo "Latest short SHA tag is: $TAG"
+        if [[ -z "$TAG" ]]; then
+          echo "❌ No tag matched the short SHA pattern. Exiting."
+          exit 1
+        fi
+
+        echo "✅ Latest short SHA tag is: $TAG"
         echo "current_image_sha=$TAG" >> "$GITHUB_OUTPUT"
