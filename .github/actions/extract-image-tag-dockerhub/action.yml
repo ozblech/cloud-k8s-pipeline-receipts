@@ -9,7 +9,7 @@ inputs:
 outputs:
   current_image_sha:
     description: "Current image tag (e.g., a1b2c3d)"
-    value: ${{ steps.extract.outputs.current_image_sha }}
+    value: ${{ steps.fetch-latest-tag.outputs.current_image_sha }}
 
 runs:
   using: "composite"
@@ -18,26 +18,27 @@ runs:
       id: fetch-latest-tag
       shell: bash
       run: |
-        set -e
+        set -euo pipefail
+
         IMAGE_REPO="${{ inputs.image-repo }}"
         echo "Fetching tags for $IMAGE_REPO from Docker Hub..."
 
         RAW_JSON=$(curl -s "https://registry.hub.docker.com/v2/repositories/${IMAGE_REPO}/tags?page_size=100")
-        echo "RAW JSON from Docker Hub:"
-        echo "$RAW_JSON"
 
-        echo "$RAW_JSON" | jq -r '.results[].name'
-
+        # Get the latest tag name (e.g., 2.0.15-ffc5a1a)
         TAG=$(echo "$RAW_JSON" \
           | jq -r '.results[].name' \
-          | grep -E '[a-f0-9]{7}$' \
           | sort -r \
           | head -n1)
 
         if [[ -z "$TAG" ]]; then
-          echo "❌ No tag matched the short SHA pattern. Exiting."
+          echo "❌ No tags found."
           exit 1
         fi
 
-        echo "✅ Latest short SHA tag is: $TAG"
-        echo "current_image_sha=$TAG" >> "$GITHUB_OUTPUT"
+        # Extract the last 7 characters (assumed to be the short SHA)
+        SHORT_SHA="${TAG: -7}"
+
+        echo "✅ Latest tag is: $TAG"
+        echo "🧩 Extracted short SHA: $SHORT_SHA"
+        echo "current_image_sha=$SHORT_SHA" >> "$GITHUB_OUTPUT"
