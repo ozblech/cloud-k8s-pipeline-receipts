@@ -87,6 +87,9 @@ jobs:
   deploy:
     needs: [bump-version, docker-build-push]
     uses: ./.github/workflows/deploy.yml
+    permissions:
+      id-token: write  # ✅ This enables OIDC for AWS or other cloud access
+      contents: read    # (optional) if your deploy needs repo read access
     with:
       image_tag: ${{ needs.bump-version.outputs.new_image_sha }}
     secrets: inherit
