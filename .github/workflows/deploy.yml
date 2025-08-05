@@ -22,9 +22,9 @@ jobs:
     name: Deploy to EC2 Minikube
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout source code
+      - name: Checkout source code # for using actions
         uses: actions/checkout@v4
-        
+
       - name: Fetch EC2 public IP
         id: fetch-minikube-ec2-ip
         uses: ./.github/actions/fetch-ec2-public-ip
@@ -36,8 +36,17 @@ jobs:
       - name: Print DNS
         run: echo "DNS is ${{ steps.fetch-minikube-ec2-ip.outputs.public_dns }}"
 
-      - name: Print image tag
-        run: echo "Image tag is ${{ inputs.image_tag }}"
+      - name: Generate values-secret.yaml from template
+        run: |
+          cp receipts_project/helm_chart/values-secret.template.yaml values-secret.yaml
+
+          sed -i "s|__DB_USER__|${{ secrets.DB_USER }}|g" values-secret.yaml
+          sed -i "s|__DB_PASSWORD__|${{ secrets.DB_PASSWORD }}|g" values-secret.yaml
+          sed -i "s|__S3_BUCKET__|${{ secrets.S3_BUCKET_NAME }}|g" values-secret.yaml
+          sed -i "s|__S3_REGION__|${{ secrets.AWS_REGION }}|g" values-secret.yaml
+          sed -i "s|__DB_CONNECTION_STRING__|${{ secrets.DB_CONNECTION_STRING }}|g" values-secret.yaml
+          sed -i "s|__AWS_ACCESS_KEY_ID__|${{ secrets.AWS_ACCESS_KEY_ID }}|g" values-secret.yaml
+          sed -i "s|__AWS_SECRET_ACCESS_KEY__|${{ secrets.AWS_SECRET_ACCESS_KEY }}|g" values-secret.yaml
 
       - name: Create JSON command file for deployment + remove old images
         run: |
@@ -50,7 +59,7 @@ jobs:
               commands: [
                 "export KUBECONFIG=\($kubeconfig_path)",             
                 "echo \"Deploying new Docker image...\"",
-                "kubectl set image deployment/\($deployment) \($deployment)=\($image_repo):\($image_tag)",
+                "helm upgrade \($deployment) ./receipts_project/helm_chart/ --install --namespace default --values ./receipts_project/helm_chart/values.yaml --values values-secret.yaml --set image.repository=\($image_repo) --set image.tag=\($image_tag)",
                 "kubectl rollout status deployment/\($deployment) -n default --timeout=60s || (echo \"Rollout failed\" && exit 1)",
                 "kubectl label deployment/\($deployment) version=\($image_tag) --overwrite",
                 "echo \"Cleaning up old Docker images...\"",
