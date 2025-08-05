@@ -93,6 +93,7 @@ jobs:
     with:
       image_tag: ${{ needs.bump-version.outputs.new_image_sha }}
     secrets: inherit
+    
 
 
   # push-version-tag:
