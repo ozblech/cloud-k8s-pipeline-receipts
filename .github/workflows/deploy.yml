@@ -15,17 +15,13 @@ env:
   IMAGE_REPO: ${{ vars.IMAGE_REPO }}              # e.g., ozblech/receipts-api
   DEPLOYMENT_NAME: ${{ vars.DEPLOYMENT_NAME }}    # e.g., receipts-api
   AWS_REGION: ${{ secrets.AWS_REGION }}
+  IMAGE_TAG: ${{ inputs.image_tag }}  # e.g., a1b2c3d
 
 jobs:
   deploy:
     name: Deploy to EC2 Minikube
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-            fetch-depth: 0  # This ensures all history and tags are fetched
-
       - name: Fetch EC2 public IP
         id: fetch-minikube-ec2-ip
         uses: ./.github/actions/fetch-ec2-public-ip
@@ -36,6 +32,9 @@ jobs:
 
       - name: Print DNS
         run: echo "DNS is ${{ steps.fetch-minikube-ec2-ip.outputs.public_dns }}"
+
+      - name: Print image tag
+        run: echo "Image tag is ${{ inputs.image_tag }}"
 
       - name: Create JSON command file for deployment + remove old images
         run: |
