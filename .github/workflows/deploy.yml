@@ -22,6 +22,9 @@ jobs:
     name: Deploy to EC2 Minikube
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+        
       - name: Fetch EC2 public IP
         id: fetch-minikube-ec2-ip
         uses: ./.github/actions/fetch-ec2-public-ip
