@@ -95,6 +95,7 @@ jobs:
             --arg kubeconfig_path "$KUBECONFIG_PATH" \
             --arg deployment "$DEPLOYMENT_NAME" \
             --arg image_tag "$IMAGE_TAG" \
+            --arg image_repo "$IMAGE_REPO" \
             '{
               commands: [
                 "export KUBECONFIG=\($kubeconfig_path)",
