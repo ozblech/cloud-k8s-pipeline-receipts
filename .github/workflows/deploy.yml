@@ -118,16 +118,7 @@ jobs:
               commands: [
                 "export KUBECONFIG=\($kubeconfig_path)",
                 "echo \"Getting secrets from AWS Secrets Manager...\"",
-                "SECRET_JSON=$(aws secretsmanager get-secret-value --secret-id receipts-app-secrets --query SecretString --output text)",
                 
-                "DB_USER=$(echo $SECRET_JSON | jq -r .db_user)",
-                "DB_PASSWORD=$(echo $SECRET_JSON | jq -r .db_password)",
-                "S3_BUCKET=$(echo $SECRET_JSON | jq -r .s3_bucket)",
-                "S3_REGION=$(echo $SECRET_JSON | jq -r .s3_region)",
-                "DB_CONN=$(echo $SECRET_JSON | jq -r .db_connection_string)",
-                "AWS_KEY_ID=$(echo $SECRET_JSON | jq -r .aws_access_key_id)",
-                "AWS_SECRET=$(echo $SECRET_JSON | jq -r .aws_secret_access_key)",
-
                 "echo \"Deploying new Docker image...\"",
                 "helm upgrade \($deployment) /helm_chart/helm_chart/ --install --namespace default --values /helm_chart/helm_chart/values.yaml +
                 "--set secret.db_user=\($db_user) " +

@@ -137,6 +137,20 @@ resource "aws_iam_role_policy" "github_actions_policy" {
           "ssm:GetParametersByPath"
         ],
         Resource = "*"
+      },
+      {
+        Sid: "AllowSecretsManagerAccess",
+        Effect: "Allow",
+        Action: [
+          "secretsmanager:GetSecretValue"
+        ],
+        Resource = "*"
+      },
+      {
+        Sid: "AllowSTSAssumeRole",
+        Effect: "Allow",
+        Action: "sts:AssumeRole",
+        Resource = "*"
       }
     ]
   })
