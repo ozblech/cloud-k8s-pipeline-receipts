@@ -90,35 +90,27 @@ jobs:
           DEPLOYMENT_NAME="${{ env.DEPLOYMENT_NAME }}"
           IMAGE_REPO="${{ env.IMAGE_REPO }}"
           KUBECONFIG_PATH="${{ vars.KUBECONFIG_PATH }}"
-
-          echo "Fetching secrets from AWS Secrets Manager..."
-          SECRET_JSON=$(aws secretsmanager get-secret-value --secret-id receipts-app-secrets1 --query SecretString --output text)
-
-          DB_USER=$(echo "$SECRET_JSON" | jq -r .db_user)
-          DB_PASSWORD=$(echo "$SECRET_JSON" | jq -r .db_password)
-          S3_BUCKET=$(echo "$SECRET_JSON" | jq -r .s3_bucket_name)
-          S3_REGION=$(echo "$SECRET_JSON" | jq -r .s3_region)
-          DB_CONN=$(echo "$SECRET_JSON" | jq -r .db_connection_string)
-          AWS_KEY_ID=$(echo "$SECRET_JSON" | jq -r .aws_access_key_id)
-          AWS_SECRET=$(echo "$SECRET_JSON" | jq -r .aws_secret_access_key)
           
           COMMANDS_JSON=$(jq -n \
             --arg kubeconfig_path "$KUBECONFIG_PATH" \
             --arg deployment "$DEPLOYMENT_NAME" \
             --arg image_tag "$IMAGE_TAG" \
-            --arg db_user "$DB_USER" \
-            --arg db_password "$DB_PASSWORD" \
-            --arg s3_bucket "$S3_BUCKET" \
-            --arg s3_region "$S3_REGION" \
-            --arg db_conn "$DB_CONN" \
-            --arg aws_key_id "$AWS_KEY_ID" \
-            --arg aws_secret "$AWS_SECRET" \
-            --arg image_repo "$IMAGE_REPO" \
             '{
               commands: [
                 "export KUBECONFIG=\($kubeconfig_path)",
+                "echo \"Fetching secrets from AWS Secrets Manager...\"",
+                "SECRET_JSON=$(aws secretsmanager get-secret-value --secret-id receipts-app-secrets1 --query SecretString --output text)",
+
+                "DB_USER=$(echo \"$SECRET_JSON\" | jq -r .db_user)",
+                "DB_PASSWORD=$(echo \"$SECRET_JSON\" | jq -r .db_password)",
+                "S3_BUCKET=$(echo \"$SECRET_JSON\" | jq -r .s3_bucket_name)",
+                "S3_REGION=$(echo \"$SECRET_JSON\" | jq -r .s3_region)",
+                "DB_CONN=$(echo \"$SECRET_JSON\" | jq -r .db_connection_string)",
+                "AWS_KEY_ID=$(echo \"$SECRET_JSON\" | jq -r .aws_access_key_id)",
+                "AWS_SECRET=$(echo \"$SECRET_JSON\" | jq -r .aws_secret_access_key)",
+
                 "echo \"Creating secret.yaml file\"",
-                "cat <<EOF > /helm_chart/helm_chart/values-secret.yaml\nsecret:\n  db_user: \"\($db_user)\"\n  db_password: \"\($db_password)\"\n  s3_bucket_name: \"\($s3_bucket)\"\n  s3_region: \"\($s3_region)\"\n  db_connection_string: \"\($db_conn)\"\n\naws:\n  AWS_ACCESS_KEY_ID: \"\($aws_key_id)\"\n  AWS_SECRET_ACCESS_KEY: \"\($aws_secret)\"\nEOF",
+                "cat <<EOF > /helm_chart/helm_chart/values-secret.yaml\nsecret:\n  db_user: \"$DB_USER\"\n  db_password: \"$DB_PASSWORD\"\n  s3_bucket_name: \"$S3_BUCKET\"\n  s3_region: \"$S3_REGION\"\n  db_connection_string: \"$DB_CONN\"\n\naws:\n  AWS_ACCESS_KEY_ID: \"$AWS_KEY_ID\"\n  AWS_SECRET_ACCESS_KEY: \"$AWS_SECRET\"\nEOF",
                 "chmod 600 /helm_chart/helm_chart/values-secret.yaml",
 
                 "echo \"Deploying new Docker image...\"",
