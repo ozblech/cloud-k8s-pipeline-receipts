@@ -42,6 +42,11 @@ resource "aws_iam_role_policy_attachment" "ssm_minikube_access" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
 }
 
+resource "aws_iam_role_policy_attachment" "secrets_manager_access" {
+  role       = aws_iam_role.minikube_role.name
+  policy_arn = "arn:aws:iam::aws:policy/SecretsManagerReadWrite"
+}
+
 // EC2 instances do not accept IAM roles directly, only instance profiles.
 resource "aws_iam_instance_profile" "minikube_profile" {
   name = "minikube-instance-profile"
