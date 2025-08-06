@@ -107,13 +107,13 @@ jobs:
 
                 "echo \"Deploying new Docker image...\"",
                 "helm upgrade \($deployment) /helm_chart/helm_chart/ --install --namespace default --values /helm_chart/helm_chart/values.yaml +
-                "--set secret.db_user=$DB_USER " +
-                "--set secret.db_password=$DB_PASSWORD " +
-                "--set secret.s3_bucket=$S3_BUCKET " +
-                "--set secret.s3_region=$S3_REGION " +
-                "--set secret.db_connection_string=$DB_CONN " +
-                "--set secret.aws_access_key_id=$AWS_KEY_ID " +
-                "--set secret.aws_secret_access_key=$AWS_SECRET " +
+                "--set secret.db_user=\($DB_USER) " +
+                "--set secret.db_password=\($DB_PASSWORD) " +
+                "--set secret.s3_bucket=\($S3_BUCKET) " +
+                "--set secret.s3_region=\($S3_REGION) " +
+                "--set secret.db_connection_string=\($DB_CONN) " +
+                "--set secret.aws_access_key_id=\($AWS_KEY_ID) " +
+                "--set secret.aws_secret_access_key=\($AWS_SECRET) " +
                 "--set image.repository=\($image_repo) --set image.tag=\($image_tag)",
                 "kubectl rollout status deployment/\($deployment) -n default --timeout=60s || (echo \"Rollout failed\" && exit 1)",
                 "kubectl label deployment/\($deployment) version=\($image_tag) --overwrite",
