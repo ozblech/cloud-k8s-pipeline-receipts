@@ -103,13 +103,13 @@ jobs:
           AWS_SECRET=$(echo "$SECRET_JSON" | jq -r .aws_secret_access_key)
 
           HELM_CMD="helm upgrade $DEPLOYMENT_NAME /helm_chart/helm_chart/ --install --namespace default --values /helm_chart/helm_chart/values.yaml \
-          --set secret.db_user=$DB_USER \
-          --set secret.db_password=$DB_PASSWORD \
-          --set secret.s3_bucket_name=$S3_BUCKET \
-          --set secret.s3_region=$S3_REGION \
-          --set secret.db_connection_string=$DB_CONN \
-          --set secret.aws_access_key_id=$AWS_KEY_ID \
-          --set secret.aws_secret_access_key=$AWS_SECRET \
+          --set secret.DB_USER=$DB_USER \
+          --set secret.DB_PASSWORD=$DB_PASSWORD \
+          --set secret.S3_BUCKET_NAME=$S3_BUCKET \
+          --set secret.S3_REGION=$S3_REGION \
+          --set secret.DB_CONNECTION_STRING=$DB_CONN \
+          --set secret.AWS_ACCESS_KEY_ID=$AWS_KEY_ID \
+          --set secret.AWS_SECRET_ACCESS_KEY=$AWS_SECRET \
           --set image.repository=$IMAGE_REPO \
           --set image.tag=$IMAGE_TAG"
           
