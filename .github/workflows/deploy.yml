@@ -101,34 +101,30 @@ jobs:
           DB_CONN=$(echo "$SECRET_JSON" | jq -r .db_connection_string)
           AWS_KEY_ID=$(echo "$SECRET_JSON" | jq -r .aws_access_key_id)
           AWS_SECRET=$(echo "$SECRET_JSON" | jq -r .aws_secret_access_key)
+
+          HELM_CMD="helm upgrade $DEPLOYMENT_NAME /helm_chart/helm_chart/ --install --namespace default --values /helm_chart/helm_chart/values.yaml \
+          --set secret.db_user=$DB_USER \
+          --set secret.db_password=$DB_PASSWORD \
+          --set secret.s3_bucket_name=$S3_BUCKET \
+          --set secret.s3_region=$S3_REGION \
+          --set secret.db_connection_string=$DB_CONN \
+          --set secret.aws_access_key_id=$AWS_KEY_ID \
+          --set secret.aws_secret_access_key=$AWS_SECRET \
+          --set image.repository=$IMAGE_REPO \
+          --set image.tag=$IMAGE_TAG"
           
           COMMANDS_JSON=$(jq -n \
-            --arg image_tag "$IMAGE_TAG" \
-            --arg deployment "$DEPLOYMENT_NAME" \
-            --arg image_repo "$IMAGE_REPO" \
             --arg kubeconfig_path "$KUBECONFIG_PATH" \
-            --arg db_user "$DB_USER" \
-            --arg db_password "$DB_PASSWORD" \
-            --arg s3_bucket "$S3_BUCKET" \
-            --arg s3_region "$S3_REGION" \
-            --arg db_conn "$DB_CONN" \
-            --arg aws_key "$AWS_KEY_ID" \
-            --arg aws_secret "$AWS_SECRET" \
+            --arg helm_cmd "$HELM_CMD" \
+            --arg deployment "$DEPLOYMENT_NAME" \
+            --arg image_tag "$IMAGE_TAG" \
             '{
               commands: [
                 "export KUBECONFIG=\($kubeconfig_path)",
                 "echo \"Getting secrets from AWS Secrets Manager...\"",
                 
                 "echo \"Deploying new Docker image...\"",
-                "helm upgrade \($deployment) /helm_chart/helm_chart/ --install --namespace default --values /helm_chart/helm_chart/values.yaml +
-                "--set secret.db_user=\($db_user) " +
-                "--set secret.db_password=\($db_password) " +
-                "--set secret.s3_bucket_name=\($s3_bucket) " +
-                "--set secret.s3_region=\($s3_region) " +
-                "--set secret.db_connection_string=\($db_conn) " +
-                "--set secret.aws_access_key_id=\($aws_key) " +
-                "--set secret.aws_secret_access_key=\($aws_secret) " +
-                "--set image.repository=\($image_repo) --set image.tag=\($image_tag)",
+                "\($helm_cmd)",
                 "kubectl rollout status deployment/\($deployment) -n default --timeout=60s || (echo \"Rollout failed\" && exit 1)",
                 "kubectl label deployment/\($deployment) version=\($image_tag) --overwrite",
                 "echo \"Removing secret values file...\"",
