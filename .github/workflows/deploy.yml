@@ -48,6 +48,40 @@ jobs:
           sed -i "s|__AWS_ACCESS_KEY_ID__|${{ secrets.AWS_ACCESS_KEY_ID }}|g" values-secret.yaml
           sed -i "s|__AWS_SECRET_ACCESS_KEY__|${{ secrets.AWS_SECRET_ACCESS_KEY }}|g" values-secret.yaml
 
+      - name: Tar and base64-encode Helm chart
+        run: |
+          tar -czf helm_chart.tar.gz -C receipts_project helm_chart
+          base64 helm_chart.tar.gz > helm_chart.tar.gz.b64
+          echo "Helm chart tar file created and encoded."
+          ls /tmp/
+
+      - name: Create JSON command file for copying the helm chart tar file into ec2 using ssm
+        run: |
+          COMMANDS_JSON=$(jq -n \
+            '{
+              commands: [
+                "echo \"Copying Helm chart tar file to EC2...\"",
+                "cat > /tmp/helm_chart.tar.gz.b64 <<EOF",
+                "'"$(cat helm_chart.tar.gz.b64)"'",
+                "EOF",
+                "echo \"Decoding and extracting Helm chart...\"",
+                "base64 -d /tmp/helm_chart.tar.gz.b64 > /tmp/helm_chart.tar.gz",
+                "tar -xzvf /tmp/helm_chart.tar.gz -C /helm_chart/"
+              ]
+            }')
+
+          echo "$COMMANDS_JSON" > copy-helm-chart.json
+          cat copy-helm-chart.json
+
+      - name: Run SSM command to copy Helm chart tar file
+        id: run-ssm-copy-helm-chart
+        uses: ./.github/actions/ssm
+        with:
+          aws_account_id: ${{ secrets.AWS_ACCOUNT_ID }}
+          instance_id: ${{ steps.fetch-minikube-ec2-ip.outputs.instance_id }}
+          commands-file-name: copy-helm-chart.json
+          aws_region: ${{ env.AWS_REGION }}
+
       - name: Create JSON command file for deployment + remove old images
         run: |
           COMMANDS_JSON=$(jq -n \
@@ -57,7 +91,7 @@ jobs:
             --arg kubeconfig_path "${{ vars.KUBECONFIG_PATH }}" \
             '{
               commands: [
-                "export KUBECONFIG=\($kubeconfig_path)",             
+                "export KUBECONFIG=\($kubeconfig_path)",          
                 "echo \"Deploying new Docker image...\"",
                 "helm upgrade \($deployment) ./receipts_project/helm_chart/ --install --namespace default --values ./receipts_project/helm_chart/values.yaml --values ./receipts_project/helm_chart/values-secret.yaml --set image.repository=\($image_repo) --set image.tag=\($image_tag)",
                 "kubectl rollout status deployment/\($deployment) -n default --timeout=60s || (echo \"Rollout failed\" && exit 1)",
