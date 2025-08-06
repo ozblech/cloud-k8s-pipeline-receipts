@@ -25,6 +25,7 @@ module "iam" {
   minikube_ec2_tag_name = module.ec2.minikube_ec2_tag_name
   minikube_ec2_id = module.ec2.minikube_ec2_id
   region = var.region
+  s3_bucket_name = var.s3_bucket_name
 }
 
 module "security_groups" {

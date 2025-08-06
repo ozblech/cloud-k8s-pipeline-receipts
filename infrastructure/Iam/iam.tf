@@ -116,6 +116,27 @@ resource "aws_iam_role_policy" "github_actions_policy" {
         Effect: "Allow",
         Action: "ec2:DescribeInstances",
         Resource: "*"
+      },
+      {
+        Sid: "AllowS3Access",
+        Effect: "Allow",
+        Action: [
+          "s3:PutObject"
+        ],
+        Resource: [
+          "arn:aws:s3:::${var.s3_bucket_name}",
+          "arn:aws:s3:::${var.s3_bucket_name}/*"
+        ]
+      },
+      {
+        Sid: "AllowSSMParameterStoreAccess",
+        Effect = "Allow",
+        Action = [
+          "ssm:GetParameter",
+          "ssm:GetParameters",
+          "ssm:GetParametersByPath"
+        ],
+        Resource = "*"
       }
     ]
   })
