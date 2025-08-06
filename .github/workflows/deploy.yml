@@ -39,7 +39,7 @@ jobs:
       - name: Generate values-secret.yaml from template
         run: |
           cp receipts_project/helm_chart/values-secret.template.yaml receipts_project/helm_chart/values-secret.yaml
-
+          ls -l receipts_project/helm_chart/
           sed -i "s|__DB_USER__|${{ secrets.DB_USER }}|g" values-secret.yaml
           sed -i "s|__DB_PASSWORD__|${{ secrets.DB_PASSWORD }}|g" values-secret.yaml
           sed -i "s|__S3_BUCKET__|${{ secrets.S3_BUCKET_NAME }}|g" values-secret.yaml
