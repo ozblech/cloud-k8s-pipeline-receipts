@@ -92,7 +92,7 @@ jobs:
           KUBECONFIG_PATH="${{ vars.KUBECONFIG_PATH }}"
 
           echo "Fetching secrets from AWS Secrets Manager..."
-          SECRET_JSON=$(aws secretsmanager get-secret-value --secret-id receipts-app-secrets --query SecretString --output text)
+          SECRET_JSON=$(aws secretsmanager get-secret-value --secret-id receipts-app-secrets1 --query SecretString --output text)
 
           DB_USER=$(echo "$SECRET_JSON" | jq -r .db_user)
           DB_PASSWORD=$(echo "$SECRET_JSON" | jq -r .db_password)
@@ -101,46 +101,32 @@ jobs:
           DB_CONN=$(echo "$SECRET_JSON" | jq -r .db_connection_string)
           AWS_KEY_ID=$(echo "$SECRET_JSON" | jq -r .aws_access_key_id)
           AWS_SECRET=$(echo "$SECRET_JSON" | jq -r .aws_secret_access_key)
-
-          # Construct HELM_CMD safely as a JSON array of words
-          HELM_CMD=$(jq -Rn --arg DEPLOYMENT_NAME "$DEPLOYMENT_NAME" \
-                            --arg IMAGE_TAG "$IMAGE_TAG" \
-                            --arg IMAGE_REPO "$IMAGE_REPO" \
-                            --arg DB_USER "$DB_USER" \
-                            --arg DB_PASSWORD "$DB_PASSWORD" \
-                            --arg S3_BUCKET "$S3_BUCKET" \
-                            --arg S3_REGION "$S3_REGION" \
-                            --arg DB_CONN "$DB_CONN" \
-                            --arg AWS_KEY_ID "$AWS_KEY_ID" \
-                            --arg AWS_SECRET "$AWS_SECRET" '
-            "helm upgrade \($DEPLOYMENT_NAME) /helm_chart/helm_chart/ --install --namespace default --values /helm_chart/helm_chart/values.yaml " +
-            "--set secret.DB_USER=\"\($DB_USER)\" " +
-            "--set secret.DB_PASSWORD=\"\($DB_PASSWORD)\" " +
-            "--set secret.S3_BUCKET_NAME=\"\($S3_BUCKET)\" " +
-            "--set secret.S3_REGION=\"\($S3_REGION)\" " +
-            "--set secret.DB_CONNECTION_STRING=\"\($DB_CONN)\" " +
-            "--set secret.AWS_ACCESS_KEY_ID=\"\($AWS_KEY_ID)\" " +
-            "--set secret.AWS_SECRET_ACCESS_KEY=\"\($AWS_SECRET)\" " +
-            "--set image.repository=\"\($IMAGE_REPO)\" " +
-            "--set image.tag=\"\($IMAGE_TAG)\""
-          ')
           
           COMMANDS_JSON=$(jq -n \
             --arg kubeconfig_path "$KUBECONFIG_PATH" \
-            --arg helm_cmd "$HELM_CMD" \
             --arg deployment "$DEPLOYMENT_NAME" \
             --arg image_tag "$IMAGE_TAG" \
+            --arg db_user "$DB_USER" \
+            --arg db_password "$DB_PASSWORD" \
+            --arg s3_bucket "$S3_BUCKET" \
+            --arg s3_region "$S3_REGION" \
+            --arg db_conn "$DB_CONN" \
+            --arg aws_key_id "$AWS_KEY_ID" \
+            --arg aws_secret "$AWS_SECRET" \
+            --arg image_repo "$IMAGE_REPO" \
             '{
               commands: [
                 "export KUBECONFIG=\($kubeconfig_path)",
-                "echo \"Getting secrets from AWS Secrets Manager...\"",
-                
+                "echo \"Creating secret.yaml file\"",
+                "cat <<EOF > /helm_chart/helm_chart/values-secret.yaml\nsecret:\n  db_user: \"\($db_user)\"\n  db_password: \"\($db_password)\"\n  s3_bucket_name: \"\($s3_bucket)\"\n  s3_region: \"\($s3_region)\"\n  db_connection_string: \"\($db_conn)\"\n\naws:\n  AWS_ACCESS_KEY_ID: \"\($aws_key_id)\"\n  AWS_SECRET_ACCESS_KEY: \"\($aws_secret)\"\nEOF",
+                "chmod 600 /helm_chart/helm_chart/values-secret.yaml",
+
                 "echo \"Deploying new Docker image...\"",
-                "\($helm_cmd)",
+                "helm upgrade \"\($deployment)\" /helm_chart/helm_chart --install --namespace default -f /helm_chart/helm_chart/values.yaml -f /helm_chart/helm_chart/values-secret.yaml --set image.repository=\($image_repo) --set image.tag=\($image_tag)",
                 "kubectl rollout status deployment/\($deployment) -n default --timeout=60s || (echo \"Rollout failed\" && exit 1)",
                 "kubectl label deployment/\($deployment) version=\($image_tag) --overwrite",
                 "echo \"Removing secret values file...\"",
-                "rm -f /helm_chart/helm_chart/values-secret.yaml",
+                "shred -u /helm_chart/helm_chart/values-secret.yaml",
                 "echo \"Cleaning up old Docker images...\"",
                 "runuser -l ec2-user -c \"minikube ssh -- docker system prune -a -f\""
               ]
