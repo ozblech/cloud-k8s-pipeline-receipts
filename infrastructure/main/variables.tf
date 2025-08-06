@@ -56,3 +56,29 @@ variable "postgres_ec2_private_ip" {
   description = "Private IP address of the PostgreSQL EC2 instance"
   type        = string
 }
+
+variable "db_user" {
+  description = "Database username"
+  type        = string
+}
+variable "db_password" {
+  description = "Database password"
+  type        = string
+}
+variable "db_connection_string" {
+  description = "Database connection string"
+  type        = string
+}
+variable "s3_region" {
+  description = "AWS region for the S3 bucket"
+  type        = string
+  default     = "us-west-2" // Change as needed
+}
+variable "aws_access_key_id" {
+  description = "AWS access key ID"
+  type        = string
+}
+variable "aws_secret_access_key" {
+  description = "AWS secret access key"
+  type        = string
+}

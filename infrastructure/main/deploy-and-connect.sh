@@ -3,6 +3,7 @@
 set -euo pipefail
 
 echo "🚀 Starting Terraform apply..."
+terraform init
 terraform apply --auto-approve
 
 echo "✅ Terraform apply completed."

@@ -52,3 +52,14 @@ module "s3" {
   s3_bucket_name = var.s3_bucket_name
   minikube_role_arn  = module.iam.minikube_role_arn
 }
+
+module "secrets" {
+  source = "../Secrets"
+  db_user = var.db_user
+  db_password = var.db_password
+  s3_bucket_name = var.s3_bucket_name
+  s3_region = var.s3_region
+  db_connection_string = var.db_connection_string
+  aws_access_key_id = var.aws_access_key_id
+  aws_secret_access_key = var.aws_secret_access_key
+}
