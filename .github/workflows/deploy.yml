@@ -119,7 +119,7 @@ jobs:
                 "kubectl rollout status deployment/\($deployment) -n default --timeout=60s || (echo \"Rollout failed\" && exit 1)",
                 "kubectl label deployment/\($deployment) version=\($image_tag) --overwrite",
                 "echo \"Removing secret values file...\"",
-                
+                "shred -u /helm_chart/helm_chart/values-secret.yaml",
                 "echo \"Cleaning up old Docker images...\"",
                 "runuser -l ec2-user -c \"minikube ssh -- docker system prune -a -f\""
               ]
