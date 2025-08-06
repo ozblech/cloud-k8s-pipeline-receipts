@@ -95,7 +95,7 @@ jobs:
               commands: [
                 "export KUBECONFIG=\($kubeconfig_path)",          
                 "echo \"Deploying new Docker image...\"",
-                "helm upgrade \($deployment) ./helm_chart/helm_chart/ --install --namespace default --values ./helm_chart/helm_chart/values.yaml --values ./helm_chart/helm_chart/values-secret.yaml --set image.repository=\($image_repo) --set image.tag=\($image_tag)",
+                "helm upgrade \($deployment) /helm_chart/helm_chart/ --install --namespace default --values /helm_chart/helm_chart/values.yaml --values /helm_chart/helm_chart/values-secret.yaml --set image.repository=\($image_repo) --set image.tag=\($image_tag)",
                 "kubectl rollout status deployment/\($deployment) -n default --timeout=60s || (echo \"Rollout failed\" && exit 1)",
                 "kubectl label deployment/\($deployment) version=\($image_tag) --overwrite",
                 "echo \"Cleaning up old Docker images...\"",
