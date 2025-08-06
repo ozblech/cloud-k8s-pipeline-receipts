@@ -116,7 +116,6 @@ jobs:
           aws_region: ${{ env.AWS_REGION }}
 
 
-
       # - name: Configure AWS Credentials
       #   uses: aws-actions/configure-aws-credentials@v3
       #   with:
