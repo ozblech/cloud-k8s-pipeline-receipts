@@ -55,6 +55,7 @@ module "s3" {
 
 module "secrets" {
   source = "../Secrets"
+  secret_name = var.secret_name
   db_user = var.db_user
   db_password = var.db_password
   s3_bucket_name = var.s3_bucket_name

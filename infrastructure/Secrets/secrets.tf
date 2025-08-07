@@ -1,10 +1,13 @@
-resource "aws_secretsmanager_secret" "receipts_secrets1" {
-  name        = "receipts-app-secrets1"
+resource "aws_secretsmanager_secret" "receipts_secrets" {
+  name        = var.secret_name
   description = "Secrets for Receipts app (DB, S3, AWS credentials)"
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "aws_secretsmanager_secret_version" "receipts_secrets_version" {
-  secret_id     = aws_secretsmanager_secret.receipts_secrets1.id
+  secret_id     = aws_secretsmanager_secret.receipts_secrets.id
 
   secret_string = jsonencode({
     db_user                 = var.db_user

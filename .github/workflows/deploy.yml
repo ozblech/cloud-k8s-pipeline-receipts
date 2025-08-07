@@ -15,7 +15,8 @@ env:
   IMAGE_REPO: ${{ vars.IMAGE_REPO }}              # e.g., ozblech/receipts-api
   DEPLOYMENT_NAME: ${{ vars.DEPLOYMENT_NAME }}    # e.g., receipts-api
   AWS_REGION: ${{ secrets.AWS_REGION }}
-  IMAGE_TAG: ${{ inputs.image_tag }}  # e.g., a1b2c3d
+  IMAGE_TAG: ${{ inputs.image_tag }}              # e.g., a1b2c3d
+  SECRET_NAME: "receipts-app-secrets_new"         # Name of the secret in AWS Secrets Manager
 
 jobs:
   deploy:
@@ -36,21 +37,9 @@ jobs:
       - name: Print DNS
         run: echo "DNS is ${{ steps.fetch-minikube-ec2-ip.outputs.public_dns }}"
 
-      # - name: Generate values-secret.yaml from template
-      #   run: |
-      #     cd receipts_project/helm_chart/
-      #     cp values-secret.template.yaml values-secret.yaml
-      #     sed -i "s|__DB_USER__|${{ secrets.DB_USER }}|g" values-secret.yaml
-      #     sed -i "s|__DB_PASSWORD__|${{ secrets.DB_PASSWORD }}|g" values-secret.yaml
-      #     sed -i "s|__S3_BUCKET__|${{ secrets.S3_BUCKET_NAME }}|g" values-secret.yaml
-      #     sed -i "s|__S3_REGION__|${{ secrets.AWS_REGION }}|g" values-secret.yaml
-      #     sed -i "s|__DB_CONNECTION_STRING__|${{ secrets.DB_CONNECTION_STRING }}|g" values-secret.yaml
-      #     sed -i "s|__AWS_ACCESS_KEY_ID__|${{ secrets.AWS_ACCESS_KEY_ID }}|g" values-secret.yaml
-      #     sed -i "s|__AWS_SECRET_ACCESS_KEY__|${{ secrets.AWS_SECRET_ACCESS_KEY }}|g" values-secret.yaml
-
       - name: Tar and base64-encode Helm chart
         run: |
-          tar -czf helm_chart.tar.gz -C receipts_project helm_chart
+          tar -czf helm_chart.tar.gz -C receipts_project/helm_chart .
           base64 helm_chart.tar.gz > helm_chart.tar.gz.b64
           echo "Helm chart tar file created and encoded."
           ls -l helm_chart*
@@ -59,7 +48,7 @@ jobs:
         run: |
           aws s3 cp helm_chart.tar.gz s3://${{ secrets.S3_BUCKET_NAME }}/helm_chart.tar.gz
 
-      - name: Create JSON command file for copying Helm chart tar file
+      - name: Create JSON command file for copying Helm chart tar file from S3 to EC2 and extracting it
         run: |
           COMMANDS_JSON=$(jq -n \
             --arg bucket "${{ secrets.S3_BUCKET_NAME }}" \
@@ -90,17 +79,19 @@ jobs:
           DEPLOYMENT_NAME="${{ env.DEPLOYMENT_NAME }}"
           IMAGE_REPO="${{ env.IMAGE_REPO }}"
           KUBECONFIG_PATH="${{ vars.KUBECONFIG_PATH }}"
+          SECRET_NAME="${{ env.SECRET_NAME }}"
           
           COMMANDS_JSON=$(jq -n \
             --arg kubeconfig_path "$KUBECONFIG_PATH" \
             --arg deployment "$DEPLOYMENT_NAME" \
             --arg image_tag "$IMAGE_TAG" \
             --arg image_repo "$IMAGE_REPO" \
+            --arg secret_name "$SECRET_NAME" \
             '{
               commands: [
                 "export KUBECONFIG=\($kubeconfig_path)",
                 "echo \"Fetching secrets from AWS Secrets Manager...\"",
-                "SECRET_JSON=$(aws secretsmanager get-secret-value --secret-id receipts-app-secrets1 --query SecretString --output text)",
+                "SECRET_JSON=$(aws secretsmanager get-secret-value --secret-id \($secret_name) --query SecretString --output text)",
 
                 "DB_USER=$(echo \"$SECRET_JSON\" | jq -r .db_user)",
                 "DB_PASSWORD=$(echo \"$SECRET_JSON\" | jq -r .db_password)",
@@ -111,15 +102,15 @@ jobs:
                 "AWS_SECRET=$(echo \"$SECRET_JSON\" | jq -r .aws_secret_access_key)",
 
                 "echo \"Creating secret.yaml file\"",
-                "cat <<EOF > /helm_chart/helm_chart/values-secret.yaml\nsecret:\n  db_user: \"$DB_USER\"\n  db_password: \"$DB_PASSWORD\"\n  s3_bucket_name: \"$S3_BUCKET\"\n  s3_region: \"$S3_REGION\"\n  db_connection_string: \"$DB_CONN\"\n\naws:\n  AWS_ACCESS_KEY_ID: \"$AWS_KEY_ID\"\n  AWS_SECRET_ACCESS_KEY: \"$AWS_SECRET\"\nEOF",
-                "chmod 600 /helm_chart/helm_chart/values-secret.yaml",
+                "cat <<EOF > /helm_chart/values-secret.yaml\nsecret:\n  db_user: \"$DB_USER\"\n  db_password: \"$DB_PASSWORD\"\n  s3_bucket_name: \"$S3_BUCKET\"\n  s3_region: \"$S3_REGION\"\n  db_connection_string: \"$DB_CONN\"\n\naws:\n  AWS_ACCESS_KEY_ID: \"$AWS_KEY_ID\"\n  AWS_SECRET_ACCESS_KEY: \"$AWS_SECRET\"\nEOF",
+                "chmod 600 /helm_chart/values-secret.yaml",
 
                 "echo \"Deploying new Docker image...\"",
-                "helm upgrade \"\($deployment)\" /helm_chart/helm_chart --install --namespace default -f /helm_chart/helm_chart/values.yaml -f /helm_chart/helm_chart/values-secret.yaml --set image.repository=\($image_repo) --set image.tag=\($image_tag)",
+                "helm upgrade \"\($deployment)\" /helm_chart/helm_chart --install --namespace default -f /helm_chart/values.yaml -f /helm_chart/values-secret.yaml --set image.repository=\($image_repo) --set image.tag=\($image_tag)",
                 "kubectl rollout status deployment/\($deployment) -n default --timeout=60s || (echo \"Rollout failed\" && exit 1)",
                 "kubectl label deployment/\($deployment) version=\($image_tag) --overwrite",
                 "echo \"Removing secret values file...\"",
-                "shred -u /helm_chart/helm_chart/values-secret.yaml",
+                "shred -u /helm_chart/values-secret.yaml",
                 "echo \"Cleaning up old Docker images...\"",
                 "runuser -l ec2-user -c \"minikube ssh -- docker system prune -a -f\""
               ]

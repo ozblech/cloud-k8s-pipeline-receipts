@@ -82,3 +82,7 @@ variable "aws_secret_access_key" {
   description = "AWS secret access key"
   type        = string
 }
+variable "secret_name" {
+  description = "Name of the secret in AWS Secrets Manager"
+  type        = string
+}
