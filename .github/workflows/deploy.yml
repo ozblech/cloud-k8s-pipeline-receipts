@@ -106,7 +106,7 @@ jobs:
                 "chmod 600 /helm_chart/values-secret.yaml",
 
                 "echo \"Deploying new Docker image...\"",
-                "helm upgrade \"\($deployment)\" /helm_chart/helm_chart --install --namespace default -f /helm_chart/values.yaml -f /helm_chart/values-secret.yaml --set image.repository=\($image_repo) --set image.tag=\($image_tag)",
+                "helm upgrade \"\($deployment)\" /helm_chart --install --namespace default -f /helm_chart/values.yaml -f /helm_chart/values-secret.yaml --set image.repository=\($image_repo) --set image.tag=\($image_tag)",
                 "kubectl rollout status deployment/\($deployment) -n default --timeout=60s || (echo \"Rollout failed\" && exit 1)",
                 "kubectl label deployment/\($deployment) version=\($image_tag) --overwrite",
                 "echo \"Removing secret values file...\"",
