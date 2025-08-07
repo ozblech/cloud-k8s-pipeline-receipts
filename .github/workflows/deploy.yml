@@ -16,7 +16,7 @@ env:
   DEPLOYMENT_NAME: ${{ vars.DEPLOYMENT_NAME }}    # e.g., receipts-api
   AWS_REGION: ${{ secrets.AWS_REGION }}
   IMAGE_TAG: ${{ inputs.image_tag }}              # e.g., a1b2c3d
-  SECRET_NAME: "receipts-app-secrets_new"         # Name of the secret in AWS Secrets Manager
+  SECRET_NAME: "receipts-app-secrets_new1"         # Name of the secret in AWS Secrets Manager
 
 jobs:
   deploy:
@@ -83,7 +83,6 @@ jobs:
           
           envsubst < .github/ssm-templates/deploy-commands-template.json > deploy-commands.json
 
-          echo "$COMMANDS_JSON" > deploy-commands.json
           cat deploy-commands.json
 
       - name: Run SSM command using action

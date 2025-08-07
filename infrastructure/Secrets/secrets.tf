@@ -1,9 +1,6 @@
 resource "aws_secretsmanager_secret" "receipts_secrets" {
   name        = var.secret_name
   description = "Secrets for Receipts app (DB, S3, AWS credentials)"
-  lifecycle {
-    prevent_destroy = true
-  }
 }
 
 resource "aws_secretsmanager_secret_version" "receipts_secrets_version" {
