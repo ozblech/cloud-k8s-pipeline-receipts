@@ -16,8 +16,9 @@ env:
   DEPLOYMENT_NAME: ${{ vars.DEPLOYMENT_NAME }}    # e.g., receipts-api
   AWS_REGION: ${{ secrets.AWS_REGION }}
   IMAGE_TAG: ${{ inputs.image_tag }}              # e.g., a1b2c3d
-  SECRET_NAME: "receipts-app-secrets_new1"         # Name of the secret in AWS Secrets Manager
-  KUBECONFIG_PATH: "/home/ec2-user/.kube/config"   # Path to the kubeconfig file on the EC2 instance
+  SECRET_NAME: "receipts-app-secrets_new12"        # Name of the secret in AWS Secrets Manager
+  KUBECONFIG_PATH: "/home/ec2-user/.kube/config"  # Path to the kubeconfig file on the EC2 instance
+  S3_BUCKET_NAME: ${{ secrets.S3_BUCKET_NAME }}   # Name of the S3 bucket to store Helm chart tarball
 
 jobs:
   deploy:
@@ -47,22 +48,12 @@ jobs:
 
       - name: Upload Helm chart tarball to S3
         run: |
-          aws s3 cp helm_chart.tar.gz s3://${{ secrets.S3_BUCKET_NAME }}/helm_chart.tar.gz
+          aws s3 cp helm_chart.tar.gz s3://${{ env.S3_BUCKET_NAME }}/helm_chart.tar.gz
 
       - name: Create JSON command file for copying Helm chart tar file from S3 to EC2 and extracting it
         run: |
-          COMMANDS_JSON=$(jq -n \
-            --arg bucket "${{ secrets.S3_BUCKET_NAME }}" \
-            '{
-              commands: [
-                "echo \"Downloading Helm chart from S3...\"",
-                "aws s3 cp s3://\($bucket)/helm_chart.tar.gz /tmp/helm_chart.tar.gz",
-                "mkdir -p /helm_chart/",
-                "tar -xzvf /tmp/helm_chart.tar.gz -C /helm_chart/"
-              ]
-            }')
-
-          echo "$COMMANDS_JSON" > copy-helm-chart.json
+          S3_BUCKET="${{ env.S3_BUCKET_NAME }}"
+          envsubst  < .github/ssm-templates/ccopy-helm-chart-template.json > copy-helm-chart.json
           cat copy-helm-chart.json
 
       - name: Run SSM command to copy Helm chart tar file from s3 to EC2

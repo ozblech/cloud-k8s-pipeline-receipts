@@ -1,0 +1,8 @@
+{
+  "commands": [
+    "echo \"Downloading Helm chart from S3...\"",
+    "aws s3 cp s3://$S3_BUCKET/helm_chart.tar.gz /tmp/helm_chart.tar.gz",
+    "mkdir -p /helm_chart/",
+    "tar -xzvf /tmp/helm_chart.tar.gz -C /helm_chart/"
+  ]
+}
