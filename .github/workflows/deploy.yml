@@ -52,9 +52,9 @@ jobs:
 
       - name: Create JSON command file for copying Helm chart tar file from S3 to EC2 and extracting it
         run: |
-          S3_BUCKET="${{ env.S3_BUCKET_NAME }}"
-          echo s3_bucket_name: $S3_BUCKET
-          envsubst '${S3_BUCKET}' < .github/ssm-templates/copy-helm-chart-template.json > copy-helm-chart.json
+          S3_BUCKET_NAME="${{ env.S3_BUCKET_NAME }}"
+          echo s3_bucket_name: $S3_BUCKET_NAME
+          envsubst '${S3_BUCKET_NAME}' < .github/ssm-templates/copy-helm-chart-template.json > copy-helm-chart.json
           cat copy-helm-chart.json
 
       - name: Run SSM command to copy Helm chart tar file from s3 to EC2
