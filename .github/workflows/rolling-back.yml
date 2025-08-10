@@ -32,28 +32,16 @@ jobs:
           aws_account_id: ${{ secrets.AWS_ACCOUNT_ID }}
           aws_region: ${{ env.AWS_REGION }}
 
-      - name: Get latest Git tag
-        if: ${{ github.event.inputs.revision == '' }}
-        id: get-latest-tag
-        uses: ./.github/actions/extract-image-tag
 
-      - name: Echo previous image tag
-        if: ${{ github.event.inputs.revision == '' }}
-        run: |
-            echo "Previous image tag: ${{ steps.get-latest-tag.outputs.previous_image_tag }}"   
-
-      
       - name: Build rollback command dynamically into JSON file
         id: generate-commands-file
         env:
           REVISION_INPUT: ${{ github.event.inputs.revision }}
-          PREVIOUS_IMAGE_TAG: ${{ steps.get-latest-tag.outputs.previous_image_tag }}
           DEPLOYMENT_NAME: ${{ env.DEPLOYMENT_NAME }}
           IMAGE_REPO: ${{ env.IMAGE_REPO }}
           KUBECONFIG_PATH: ${{ vars.KUBECONFIG_PATH }}
         run: |
           jq -n --arg r "$REVISION_INPUT" \
-                --arg p "$PREVIOUS_IMAGE_TAG" \
                 --arg d "$DEPLOYMENT_NAME" \
                 --arg i "$IMAGE_REPO" \
                 --arg kubeconfig_path "$KUBECONFIG_PATH" \
@@ -63,7 +51,7 @@ jobs:
               "export KUBECONFIG=\($kubeconfig_path)",
               (if $r == "" then
                 "echo \"Rolling back to previous image tag: \($p)\"",
-                "kubectl set image deployment/\($d) \($d)=\($i):\($p) -n default"
+                "kubectl rollout undo deployment/\($d)"
               else
                 "echo \"Rolling back to revision: \($r)\"",
                 "kubectl rollout undo deployment/\($d) --to-revision=\($r) -n default"
@@ -103,27 +91,27 @@ jobs:
           aws_region: ${{ env.AWS_REGION }}
           commands-file-name: verify-image-command.json
 
-      - name: Parse and compare rollback result
-        if: ${{ github.event.inputs.revision == '' }}
-        run: |
-          DEPLOYED_IMAGE="${{ steps.verify-rollback.outputs.command_output }}"
-          EXPECTED_IMAGE="${{ env.IMAGE_REPO }}:${{ steps.get-latest-tag.outputs.previous_image_tag }}"
+      # - name: Parse and compare rollback result
+      #   if: ${{ github.event.inputs.revision == '' }}
+      #   run: |
+      #     DEPLOYED_IMAGE="${{ steps.verify-rollback.outputs.command_output }}"
+      #     EXPECTED_IMAGE="${{ env.IMAGE_REPO }}:${{ steps.get-latest-tag.outputs.previous_image_tag }}"
 
-          echo "✅ Retrieved deployed image: $DEPLOYED_IMAGE"
-          echo "🔄 Expecting image: $EXPECTED_IMAGE"
+      #     echo "✅ Retrieved deployed image: $DEPLOYED_IMAGE"
+      #     echo "🔄 Expecting image: $EXPECTED_IMAGE"
 
-          if [[ "$DEPLOYED_IMAGE" != "$EXPECTED_IMAGE" ]]; then
-            echo "❌ Rollback verification failed: Deployed image does not match expected."
-            exit 1
-          else
-            echo "✅ Rollback verified successfully: Image tag matches expected."
-          fi
+      #     if [[ "$DEPLOYED_IMAGE" != "$EXPECTED_IMAGE" ]]; then
+      #       echo "❌ Rollback verification failed: Deployed image does not match expected."
+      #       exit 1
+      #     else
+      #       echo "✅ Rollback verified successfully: Image tag matches expected."
+      #     fi
 
       - name: Summarize Rollback
         run: |
           echo "## Rollback Summary" >> $GITHUB_STEP_SUMMARY
           echo "- Deployment: $DEPLOYMENT_NAME" >> $GITHUB_STEP_SUMMARY
-          echo "- Rolled back to: $([[ -z "$REVISION_INPUT" ]] && echo "$PREVIOUS_IMAGE_TAG" || echo "Revision $REVISION_INPUT")" >> $GITHUB_STEP_SUMMARY
+          echo "- Rolled back to: $([[ -z "$REVISION_INPUT" ]] && echo "Revision $REVISION_INPUT")" >> $GITHUB_STEP_SUMMARY
 
 
       # - name: Rollback via SSH
