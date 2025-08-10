@@ -50,7 +50,7 @@ jobs:
               "#!/bin/bash",
               "export KUBECONFIG=\($kubeconfig_path)",
               (if $r == "" then
-                "echo \"Rolling back to previous image tag: \($p)\"",
+                "echo Rolling back to previous image tag",
                 "kubectl rollout undo deployment/\($d)"
               else
                 "echo \"Rolling back to revision: \($r)\"",
