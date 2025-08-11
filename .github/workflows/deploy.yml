@@ -12,13 +12,16 @@ on:
         type: string
 
 env:
-  IMAGE_REPO: ${{ vars.IMAGE_REPO }}              # e.g., ozblech/receipts-api
-  DEPLOYMENT_NAME: ${{ vars.DEPLOYMENT_NAME }}    # e.g., receipts-api
-  AWS_REGION: ${{ secrets.AWS_REGION }}           # e.g., us-east-1  
-  IMAGE_TAG: ${{ inputs.image_tag }}              # e.g., a1b2c3d
-  SECRET_NAME: "receipts-app-secrets_new123"       # Name of the secret in AWS Secrets Manager
-  KUBECONFIG_PATH: "/home/ec2-user/.kube/config"  # Path to the kubeconfig file on the EC2 instance
-  S3_BUCKET_NAME: ${{ secrets.S3_BUCKET_NAME }}   # Name of the S3 bucket to store Helm chart tarball
+  IMAGE_REPO: ${{ vars.IMAGE_REPO }}                # e.g., ozblech/receipts-api
+  DEPLOYMENT_NAME: ${{ vars.DEPLOYMENT_NAME }}      # e.g., receipts-api
+  AWS_REGION: ${{ secrets.AWS_REGION }}             # e.g., us-east-1  
+  IMAGE_TAG: ${{ inputs.image_tag }}                # e.g., a1b2c3d
+  SECRET_NAME: "receipts-app-secrets_new1234"        # Name of the secret in AWS Secrets Manager
+  KUBECONFIG_PATH: ${{ vars.KUBECONFIG_PATH }}      # Path to the kubeconfig file on the EC2 instance
+  S3_BUCKET_NAME: ${{ secrets.S3_BUCKET_NAME }}     # Name of the S3 bucket to store Helm chart tarball
+  AWS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}      # AWS Access Key ID
+  AWS_SECRET: ${{ secrets.AWS_SECRET_ACCESS_KEY }}  # AWS Secret Access Key
+  AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}     # AWS Account ID
 
 jobs:
   deploy:
@@ -33,7 +36,7 @@ jobs:
         uses: ./.github/actions/fetch-ec2-public-ip
         with:
           tag_name: ${{ vars.MINIKUBE_EC2_TAG_NAME }}       # e.g., minikube-ec2
-          aws_account_id: ${{ secrets.AWS_ACCOUNT_ID }}
+          aws_account_id: ${{ env.AWS_ACCOUNT_ID }}
           aws_region: ${{ env.AWS_REGION }}
 
       - name: Print DNS
@@ -73,8 +76,12 @@ jobs:
           IMAGE_REPO="${{ env.IMAGE_REPO }}"
           KUBECONFIG_PATH="${{ env.KUBECONFIG_PATH }}"
           SECRET_NAME="${{ env.SECRET_NAME }}"
+          S3_BUCKET="${{ env.S3_BUCKET_NAME }}"
+          S3_REGION="${{ env.AWS_REGION }}"
+          AWS_KEY_ID="${{ env.AWS_KEY_ID }}"
+          AWS_SECRET="${{ env.AWS_SECRET }}"
           
-          envsubst '$IMAGE_TAG,$DEPLOYMENT_NAME,$IMAGE_REPO,$KUBECONFIG_PATH,$SECRET_NAME' < .github/ssm-templates/deploy-commands-template.json > deploy-commands.json
+          envsubst '$IMAGE_TAG,$DEPLOYMENT_NAME,$IMAGE_REPO,$KUBECONFIG_PATH,$SECRET_NAME,$S3_BUCKET,$S3_REGION,$AWS_KEY_ID,$AWS_SECRET' < .github/ssm-templates/deploy-commands-template.json > deploy-commands.json
 
           cat deploy-commands.json
 
@@ -82,7 +89,7 @@ jobs:
         id: run-ssm-command
         uses: ./.github/actions/ssm
         with:
-          aws_account_id: ${{ secrets.AWS_ACCOUNT_ID }}
+          aws_account_id: ${{ env.AWS_ACCOUNT_ID }}
           instance_id: ${{ steps.fetch-minikube-ec2-ip.outputs.instance_id }}
           commands-file-name: deploy-commands.json
           aws_region: ${{ env.AWS_REGION }}
