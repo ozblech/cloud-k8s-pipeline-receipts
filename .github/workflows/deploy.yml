@@ -19,8 +19,6 @@ env:
   SECRET_NAME: "receipts-app-secrets_new1234"        # Name of the secret in AWS Secrets Manager
   KUBECONFIG_PATH: ${{ vars.KUBECONFIG_PATH }}      # Path to the kubeconfig file on the EC2 instance
   S3_BUCKET_NAME: ${{ secrets.S3_BUCKET_NAME }}     # Name of the S3 bucket to store Helm chart tarball
-  AWS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}      # AWS Access Key ID
-  AWS_SECRET: ${{ secrets.AWS_SECRET_ACCESS_KEY }}  # AWS Secret Access Key
   AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}     # AWS Account ID
 
 jobs:
@@ -78,10 +76,8 @@ jobs:
           SECRET_NAME="${{ env.SECRET_NAME }}"
           S3_BUCKET="${{ env.S3_BUCKET_NAME }}"
           S3_REGION="${{ env.AWS_REGION }}"
-          AWS_KEY_ID="${{ env.AWS_KEY_ID }}"
-          AWS_SECRET="${{ env.AWS_SECRET }}"
           
-          envsubst '$IMAGE_TAG,$DEPLOYMENT_NAME,$IMAGE_REPO,$KUBECONFIG_PATH,$SECRET_NAME,$S3_BUCKET,$S3_REGION,$AWS_KEY_ID,$AWS_SECRET' < .github/ssm-templates/deploy-commands-template.json > deploy-commands.json
+          envsubst '$IMAGE_TAG,$DEPLOYMENT_NAME,$IMAGE_REPO,$KUBECONFIG_PATH,$SECRET_NAME,$S3_BUCKET,$S3_REGION' < .github/ssm-templates/deploy-commands-template.json > deploy-commands.json
 
           cat deploy-commands.json
 
