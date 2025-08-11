@@ -74,10 +74,10 @@ jobs:
           IMAGE_REPO="${{ env.IMAGE_REPO }}"
           KUBECONFIG_PATH="${{ env.KUBECONFIG_PATH }}"
           SECRET_NAME="${{ env.SECRET_NAME }}"
-          S3_BUCKET="${{ env.S3_BUCKET_NAME }}"
-          S3_REGION="${{ env.AWS_REGION }}"
+          S3_BUCKET_NAME="${{ env.S3_BUCKET_NAME }}"
+          AWS_REGION="${{ env.AWS_REGION }}"
           
-          envsubst '$IMAGE_TAG,$DEPLOYMENT_NAME,$IMAGE_REPO,$KUBECONFIG_PATH,$SECRET_NAME,$S3_BUCKET,$S3_REGION' < .github/ssm-templates/deploy-commands-template.json > deploy-commands.json
+          envsubst '$IMAGE_TAG,$DEPLOYMENT_NAME,$IMAGE_REPO,$KUBECONFIG_PATH,$SECRET_NAME,$S3_BUCKET_NAME,$AWS_REGION' < .github/ssm-templates/deploy-commands-template.json > deploy-commands.json
 
           cat deploy-commands.json
 
