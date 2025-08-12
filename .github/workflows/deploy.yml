@@ -49,13 +49,13 @@ jobs:
       - name: Update copy-helm-and-script-and-deploy.json and deploy.sh script with current image tag and other variables
         run: |
           envsubst '$S3_BUCKET_NAME,$AWS_REGION' < .github/ssm-commands/copy-helm-and-script-and-deploy.json > copy-helm-and-script-and-deploy.json
-          envsubst '$IMAGE_TAG,$DEPLOYMENT_NAME,$IMAGE_REPO,$KUBECONFIG_PATH,$SECRET_NAME,$S3_BUCKET_NAME,$AWS_REGION' < .github/ssm-scripts/deploy.sh > ssm-scripts/deploy.sh
+          envsubst '$IMAGE_TAG,$DEPLOYMENT_NAME,$IMAGE_REPO,$KUBECONFIG_PATH,$SECRET_NAME,$S3_BUCKET_NAME,$AWS_REGION' < .github/ssm-scripts/deploy.sh > deploy.sh
           cat deploy.sh
 
       - name: Upload Helm chart tarball and deploy.sh to S3
         run: |
           aws s3 cp helm_chart.tar.gz s3://${{ env.S3_BUCKET_NAME }}/helm_chart.tar.gz
-          aws s3 cp ssm-scripts/deploy.sh s3://${{ env.S3_BUCKET_NAME }}/deploy.sh
+          aws s3 cp deploy.sh s3://${{ env.S3_BUCKET_NAME }}/deploy.sh
 
       - name: Run SSM command to copy Helm chart tar file and deploy script from S3 to EC2 and run helm upgrade
         id: run-ssm-copy-helm-chart-and-deploy
