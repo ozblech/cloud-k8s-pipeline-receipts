@@ -53,9 +53,7 @@ jobs:
 
       - name: Create JSON command file for copying Helm chart tar file from S3 to EC2 and extracting it
         run: |
-          S3_BUCKET_NAME="${{ env.S3_BUCKET_NAME }}"
-          echo s3_bucket_name: $S3_BUCKET_NAME
-          envsubst '${S3_BUCKET_NAME}' < .github/ssm-templates/copy-helm-chart-template.json > copy-helm-chart.json
+          envsubst '${S3_BUCKET_NAME}' < .github/ssm-commands/copy-helm-chart-template.json > copy-helm-chart.json
           cat copy-helm-chart.json
 
       - name: Run SSM command to copy Helm chart tar file from s3 to EC2
@@ -69,7 +67,7 @@ jobs:
 
       - name: Create JSON command file for deployment + remove old images
         run: |         
-          envsubst '$IMAGE_TAG,$DEPLOYMENT_NAME,$IMAGE_REPO,$KUBECONFIG_PATH,$SECRET_NAME,$S3_BUCKET_NAME,$AWS_REGION' < .github/ssm-templates/deploy-commands-template.json > deploy-commands.json
+          envsubst '$IMAGE_TAG,$DEPLOYMENT_NAME,$IMAGE_REPO,$KUBECONFIG_PATH,$SECRET_NAME,$S3_BUCKET_NAME,$AWS_REGION' < .github/ssm-commands/deploy-commands-template.json > deploy-commands.json
           cat deploy-commands.json
 
       - name: Run SSM command using action
