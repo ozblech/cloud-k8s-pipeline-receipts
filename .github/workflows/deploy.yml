@@ -16,7 +16,7 @@ env:
   DEPLOYMENT_NAME: ${{ vars.DEPLOYMENT_NAME }}      # e.g., receipts-api
   AWS_REGION: ${{ secrets.AWS_REGION }}             # e.g., us-east-1  
   IMAGE_TAG: ${{ inputs.image_tag }}                # e.g., a1b2c3d
-  SECRET_NAME: "receipts-app-secrets_new12345"       # Name of the secret in AWS Secrets Manager
+  SECRET_NAME: "receipts-app-secrets_new123456"     # Name of the secret in AWS Secrets Manager
   KUBECONFIG_PATH: ${{ vars.KUBECONFIG_PATH }}      # Path to the kubeconfig file on the EC2 instance
   S3_BUCKET_NAME: ${{ secrets.S3_BUCKET_NAME }}     # Name of the S3 bucket to store Helm chart tarball
   AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}     # AWS Account ID
@@ -43,40 +43,27 @@ jobs:
       - name: Tar and base64-encode Helm chart
         run: |
           tar -czf helm_chart.tar.gz -C receipts_project/helm_chart .
-          base64 helm_chart.tar.gz > helm_chart.tar.gz.b64
           echo "Helm chart tar file created and encoded."
           ls -l helm_chart*
 
-      - name: Upload Helm chart tarball to S3
+      - name: Update copy-helm-and-script-and-deploy.json and deploy.sh script with current image tag and other variables
+        run: |
+          envsubst '$S3_BUCKET_NAME,$AWS_REGION' < .github/ssm-commands/copy-helm-and-script-and-deploy.json > copy-helm-and-script-and-deploy.json
+          envsubst '$IMAGE_TAG,$DEPLOYMENT_NAME,$IMAGE_REPO,$KUBECONFIG_PATH,$SECRET_NAME,$S3_BUCKET_NAME,$AWS_REGION' < .github/ssm-scripts/deploy.sh > ssm-scripts/deploy.sh
+          cat deploy.sh
+
+      - name: Upload Helm chart tarball and deploy.sh to S3
         run: |
           aws s3 cp helm_chart.tar.gz s3://${{ env.S3_BUCKET_NAME }}/helm_chart.tar.gz
+          aws s3 cp ssm-scripts/deploy.sh s3://${{ env.S3_BUCKET_NAME }}/deploy.sh
 
-      - name: Create JSON command file for copying Helm chart tar file from S3 to EC2 and extracting it
-        run: |
-          envsubst '${S3_BUCKET_NAME}' < .github/ssm-commands/copy-helm-chart-template.json > copy-helm-chart.json
-          cat copy-helm-chart.json
-
-      - name: Run SSM command to copy Helm chart tar file from s3 to EC2
-        id: run-ssm-copy-helm-chart
+      - name: Run SSM command to copy Helm chart tar file and deploy script from S3 to EC2 and run helm upgrade
+        id: run-ssm-copy-helm-chart-and-deploy
         uses: ./.github/actions/ssm
         with:
           aws_account_id: ${{ secrets.AWS_ACCOUNT_ID }}
           instance_id: ${{ steps.fetch-minikube-ec2-ip.outputs.instance_id }}
-          commands-file-name: copy-helm-chart.json
-          aws_region: ${{ env.AWS_REGION }}
-
-      - name: Create JSON command file for deployment + remove old images
-        run: |         
-          envsubst '$IMAGE_TAG,$DEPLOYMENT_NAME,$IMAGE_REPO,$KUBECONFIG_PATH,$SECRET_NAME,$S3_BUCKET_NAME,$AWS_REGION' < .github/ssm-commands/deploy-commands-template.json > deploy-commands.json
-          cat deploy-commands.json
-
-      - name: Run SSM command using action
-        id: run-ssm-command
-        uses: ./.github/actions/ssm
-        with:
-          aws_account_id: ${{ env.AWS_ACCOUNT_ID }}
-          instance_id: ${{ steps.fetch-minikube-ec2-ip.outputs.instance_id }}
-          commands-file-name: deploy-commands.json
+          commands-file-name: copy-helm-and-script-and-deploy.json
           aws_region: ${{ env.AWS_REGION }}
 
       # - name: Configure AWS Credentials
