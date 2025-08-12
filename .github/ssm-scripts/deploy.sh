@@ -61,7 +61,9 @@ kubectl rollout status "deployment/${DEPLOYMENT_NAME}" -n default --timeout=60s 
 kubectl label deployment/"${DEPLOYMENT_NAME}" version="${IMAGE_TAG}" --overwrite
 
 # Delete secret file
-rm -f /helm_chart/values-secret.yaml
+if [ -f /helm_chart/values-secret.yaml ]; then
+  shred -u /helm_chart/values-secret.yaml
+fi
 
 # Cleanup old Docker images
 echo "Cleaning up old Docker images..."
