@@ -16,7 +16,7 @@ env:
   DEPLOYMENT_NAME: ${{ vars.DEPLOYMENT_NAME }}      # e.g., receipts-api
   AWS_REGION: ${{ secrets.AWS_REGION }}             # e.g., us-east-1  
   IMAGE_TAG: ${{ inputs.image_tag }}                # e.g., a1b2c3d
-  SECRET_NAME: "receipts-app-secrets_new1234"        # Name of the secret in AWS Secrets Manager
+  SECRET_NAME: "receipts-app-secrets_new12345"       # Name of the secret in AWS Secrets Manager
   KUBECONFIG_PATH: ${{ vars.KUBECONFIG_PATH }}      # Path to the kubeconfig file on the EC2 instance
   S3_BUCKET_NAME: ${{ secrets.S3_BUCKET_NAME }}     # Name of the S3 bucket to store Helm chart tarball
   AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}     # AWS Account ID
@@ -68,17 +68,8 @@ jobs:
           aws_region: ${{ env.AWS_REGION }}
 
       - name: Create JSON command file for deployment + remove old images
-        run: |
-          IMAGE_TAG="${{ env.IMAGE_TAG }}"
-          DEPLOYMENT_NAME="${{ env.DEPLOYMENT_NAME }}"
-          IMAGE_REPO="${{ env.IMAGE_REPO }}"
-          KUBECONFIG_PATH="${{ env.KUBECONFIG_PATH }}"
-          SECRET_NAME="${{ env.SECRET_NAME }}"
-          S3_BUCKET_NAME="${{ env.S3_BUCKET_NAME }}"
-          AWS_REGION="${{ env.AWS_REGION }}"
-          
+        run: |         
           envsubst '$IMAGE_TAG,$DEPLOYMENT_NAME,$IMAGE_REPO,$KUBECONFIG_PATH,$SECRET_NAME,$S3_BUCKET_NAME,$AWS_REGION' < .github/ssm-templates/deploy-commands-template.json > deploy-commands.json
-
           cat deploy-commands.json
 
       - name: Run SSM command using action
