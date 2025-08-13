@@ -77,7 +77,9 @@ No manual steps required 🚀
 ## 5️⃣ Commands to test from local machine
 
 Upload a receipt:
+
 curl -X POST -F "file=@receipts_project/receipts/gcp.txt" http://localhost:5000/upload
 
 Print all receipts:
+
 curl http://localhost:5000/receipts
