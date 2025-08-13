@@ -46,3 +46,31 @@ secret_name             = "receipts-app-secrets"
 
 aws_access_key_id       = ""
 aws_secret_access_key   = ""
+
+💡 These values are used both for infrastructure provisioning and application configuration.
+Make sure they match the ones you’ve set in GitHub Secrets & Variables.
+
+## 3️⃣ Deploy Infrastructure & Connect to Minikube
+
+Run the deployment script from the infrastructure/main directory:
+/deploy-and-connect.sh
+This script:
+
+1.Runs terraform apply to provision AWS resources.
+
+2.Waits briefly for services to initialize.
+
+3.Runs connect-to-minikube.sh to set up your kubectl context.
+
+
+## 4️⃣ Automatic Deployment on Push
+
+Every time you push to the master branch:
+    • GitHub Actions builds a new Docker image.
+    • Tags it with the latest commit SHA.
+    • Deploys it to the Minikube cluster on EC2 using Helm.
+No manual steps required 🚀
+
+
+curl -X POST -F "file=@receipts_project/receipts/gcp.txt" http://localhost:5000/upload
+curl http://localhost:5000/receipts
