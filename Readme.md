@@ -47,6 +47,8 @@ secret_name             = "receipts-app-secrets"
 aws_access_key_id       = ""
 aws_secret_access_key   = ""
 
+hcl```
+
 💡 These values are used both for infrastructure provisioning and application configuration.
 Make sure they match the ones you’ve set in GitHub Secrets & Variables.
 
