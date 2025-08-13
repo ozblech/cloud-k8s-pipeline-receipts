@@ -31,15 +31,15 @@ Before running any workflows, make sure your GitHub repository has the following
 
 ## 2️⃣ Set Terraform Variables
 
-Edit the `terraform.tfvars` file in the root of your Terraform project:
+Edit the `terraform.tfvars` file in the root of your Terraform project (DO NOT PUSH TO GIT):
 
 ```hcl
 public_key_location     = ""  # Path to your SSH public key
 github_repo             = "username/cloud-k8s-pipeline-receipts"
 region                  = ""  # AWS region, e.g., us-west-2
 postgres_ec2_private_ip = "" # Private IP of your Postgres EC2 instance
-db_user                 = ""
-db_password             = ""
+db_user                 = "" # Base 64 Encoded
+db_password             = "" # Base 64 Encoded
 s3_bucket_name          = ""
 db_connection_string    = "dbname='receipts' host='10.0.3.100'"
 secret_name             = "receipts-app-secrets"

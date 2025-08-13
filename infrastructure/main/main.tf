@@ -45,6 +45,8 @@ module "ec2" {
   minikube_profile          = module.iam.minikube_profile
   postgres_profile          = module.iam.postgres_profile
   ami_name_filter           = var.ami_name_filter
+  db_user                   = var.db_user
+  db_password               = var.db_password
 }
 
 module "s3" {
@@ -59,7 +61,7 @@ module "secrets" {
   db_user = var.db_user
   db_password = var.db_password
   s3_bucket_name = var.s3_bucket_name
-  s3_region = var.s3_region
+  s3_region = var.region
   db_connection_string = var.db_connection_string
   aws_access_key_id = var.aws_access_key_id
   aws_secret_access_key = var.aws_secret_access_key

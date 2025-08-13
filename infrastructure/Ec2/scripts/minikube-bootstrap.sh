@@ -2,13 +2,16 @@
 exec > >(tee /var/log/minikube-bootstrap.log | logger -t user-data -s) 2>&1
 set -eux
 
+# Set variables
+EC2_USER="ec2-user"
+
 # Update and install dependencies
 dnf update -y --allowerasing || echo "dnf update failed"
 dnf install -y --allowerasing docker git curl wget conntrack || echo "package install failed"
 
 # Start and enable Docker
 systemctl enable --now docker
-usermod -aG docker ec2-user
+usermod -aG docker $EC2_USER
 
 # Install kubectl
 # Use the latest stable version of kubectl
@@ -44,21 +47,20 @@ while true; do
     #This starts a new shell with the docker group applied
     newgrp docker
 
-    runuser -l ec2-user -c "minikube start --driver=docker --cpus=2 --memory=${MIN_MEM}"
+    runuser -l $EC2_USER -c "minikube start --driver=docker --cpus=2 --memory=${MIN_MEM}"
     break
   else
     echo "Not enough memory, waiting 10 seconds before retrying..."
     sleep 10
   fi
 done
-#runuser -l ec2-user -c 'minikube start --driver=docker --cpus=2 --memory=2048'
 
 # Install Helm
 curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
 
 ############### Prometheus Operator Setup ###############
 # Deploy Prometheus Operator using Helm
-runuser -l ec2-user -c '
+runuser -l $EC2_USER -c '
   helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
   helm repo update
 
@@ -68,7 +70,7 @@ runuser -l ec2-user -c '
 '
 
 # Wait for Prometheus pods to be ready
-runuser -l ec2-user -c '
+runuser -l $EC2_USER -c '
   echo "Waiting for Prometheus components to be ready..."
   kubectl wait --namespace monitoring \
     --for=condition=Ready pod \
@@ -77,7 +79,7 @@ runuser -l ec2-user -c '
 '
 
 # Apply ServiceMonitor to monitor Minikube components
-runuser -l ec2-user -c '
+runuser -l $EC2_USER -c '
   cat <<EOF | kubectl apply -f -
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
@@ -98,7 +100,7 @@ EOF
 '
 
 # Verify Prometheus is scraping metrics
-runuser -l ec2-user -c '
+runuser -l $EC2_USER -c '
   echo "Prometheus targets:"
   kubectl port-forward -n monitoring svc/kube-prometheus-stack-prometheus 9090:9090 &
   sleep 5

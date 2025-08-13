@@ -58,11 +58,11 @@ variable "postgres_ec2_private_ip" {
 }
 
 variable "db_user" {
-  description = "Database username"
+  description = "Database username encoded in base64 for PostgreSQL"
   type        = string
 }
 variable "db_password" {
-  description = "Database password"
+  description = "Database password encoded in base64 for PostgreSQL"
   type        = string
 }
 variable "db_connection_string" {

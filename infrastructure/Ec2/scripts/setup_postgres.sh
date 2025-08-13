@@ -3,6 +3,10 @@ exec > >(tee /var/log/postgres-bootstrap.log | logger -t user-data -s) 2>&1
 # set -eux means the script will exit on any error and print each command before executing it
 set -eux
 
+DB_USER=$(echo "${DB_USER_B64}" | base64 -d)
+DB_PASSWORD=$(echo "${DB_PASSWORD_B64}" | base64 -d)
+DB_TABLE_NAME="receipts"
+
 # Update and install dependencies
 dnf update -y --allowerasing || echo "dnf update failed"
 # Install PostgreSQL 16
@@ -27,17 +31,17 @@ systemctl restart postgresql
 
 # 6. Harden authentication: switch to postgres user and set up DB and user
 sudo -u postgres psql <<EOF
-CREATE USER receipts_user WITH PASSWORD 'VeryStrongPassword123!';
-CREATE DATABASE receipts;
-GRANT ALL PRIVILEGES ON DATABASE receipts TO receipts_user;
-\connect receipts
+CREATE USER $DB_USER WITH PASSWORD '$DB_PASSWORD';
+CREATE DATABASE $DB_TABLE_NAME;
+GRANT ALL PRIVILEGES ON DATABASE $DB_TABLE_NAME TO $DB_USER;
+\connect $DB_TABLE_NAME
 
 -- Give schema privileges
-GRANT USAGE ON SCHEMA public TO receipts_user;
-GRANT CREATE ON SCHEMA public TO receipts_user;
+GRANT USAGE ON SCHEMA public TO $DB_USER;
+GRANT CREATE ON SCHEMA public TO $DB_USER;
 
--- Optional: Make receipts_user the owner of the public schema
-ALTER SCHEMA public OWNER TO receipts_user;
+-- Optional: Make $DB_USER the owner of the public schema
+ALTER SCHEMA public OWNER TO $DB_USER;
 EOF
 
 # 7. Harden authentication method in pg_hba.conf
@@ -51,16 +55,16 @@ systemctl restart postgresql
 # 9. Show final service status
 systemctl status postgresql
 
-export PGPASSWORD="VeryStrongPassword123!"
+export PGPASSWORD="$DB_PASSWORD"
 # Wait until Postgres is up
-until psql -U receipts_user -d receipts -h localhost -c '\q'; do
+until psql -U $DB_USER -d $DB_TABLE_NAME -h localhost -c '\q'; do
   echo "Waiting for PostgreSQL to be ready..."
   sleep 2
 done
 
 # Create the receipts table
-psql -U receipts_user -d receipts -h localhost <<EOF
-CREATE TABLE IF NOT EXISTS receipts (
+psql -U $DB_USER -d $DB_TABLE_NAME -h localhost <<EOF
+CREATE TABLE IF NOT EXISTS $DB_TABLE_NAME (
     id SERIAL PRIMARY KEY,
     filename TEXT NOT NULL,
     vendor TEXT,
@@ -70,7 +74,7 @@ CREATE TABLE IF NOT EXISTS receipts (
 );
 EOF
 
-echo "✅ Receipts table created (if it didn't exist)."
+echo "✅ $DB_TABLE_NAME table created (if it didn't exist)."
 
 # Set listen address to allow external connections
 sudo sed -i "s/^#listen_addresses =.*/listen_addresses = '*'/" /var/lib/pgsql/data/postgresql.conf

@@ -47,3 +47,13 @@ variable "minikube_instance_type" {
 variable "postgres_instance_type" {
   default = "t2.micro"
 }
+
+variable "db_user" {
+  description = "Database username for PostgreSQL"
+  type        = string
+}
+
+variable "db_password" {
+  description = "Database password for PostgreSQL"
+  type        = string
+}

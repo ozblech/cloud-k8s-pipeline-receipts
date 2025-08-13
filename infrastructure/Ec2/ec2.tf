@@ -34,7 +34,7 @@ resource "aws_instance" "minikube_ec2" {
     Role = "minikube"
   }
 
-  user_data = file("${path.module}/minikube-bootstrap.sh")
+  user_data = file("${path.module}/scripts/minikube-bootstrap.sh")
 }
 
 resource "aws_instance" "postgres_ec2" {
@@ -52,5 +52,8 @@ resource "aws_instance" "postgres_ec2" {
     Role = "postgres"
   }
 
-  user_data = file("${path.module}/setup_postgres.sh")
+  user_data = templatefile("${path.module}/scripts/setup_postgres.sh", {
+    DB_USER_B64     = var.db_user
+    DB_PASSWORD_B64 = var.db_password
+  })
 }
