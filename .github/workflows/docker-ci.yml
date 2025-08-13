@@ -92,7 +92,7 @@ jobs:
       contents: read    # (optional) if your deploy needs repo read access
     with:
       image_tag: ${{ needs.bump-version.outputs.new_image_sha }}
-    secrets: inherit
+    secrets: inherit  # Inherit all secrets from the workflow context
     
 
 

@@ -16,7 +16,7 @@ env:
   DEPLOYMENT_NAME: ${{ vars.DEPLOYMENT_NAME }}      # e.g., receipts-api
   AWS_REGION: ${{ secrets.AWS_REGION }}             # e.g., us-east-1  
   IMAGE_TAG: ${{ inputs.image_tag }}                # e.g., a1b2c3d
-  SECRET_NAME: "receipts-app-secrets_new123456"     # Name of the secret in AWS Secrets Manager
+  SECRET_NAME: "receipts-app-secrets_new1234567"     # Name of the secret in AWS Secrets Manager
   KUBECONFIG_PATH: ${{ vars.KUBECONFIG_PATH }}      # Path to the kubeconfig file on the EC2 instance
   S3_BUCKET_NAME: ${{ secrets.S3_BUCKET_NAME }}     # Name of the S3 bucket to store Helm chart tarball
   AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}     # AWS Account ID

@@ -89,9 +89,15 @@ kubectl get nodes || echo "❌ Failed to connect to Minikube. Check your SSH tun
 # kubectl apply -f ../receipts_project/kubernetes/
 # echo "✅ Kubernetes manifests applied successfully."
 
-# Helm install all charts in receipts_project/helm
-echo "🔄 Installing Helm charts..."
-helm upgrade --install receipts-api ../../receipts_project/helm_chart -f ../../receipts_project/helm_chart/values.yaml -f ../../receipts_project/helm_chart/values-secret.yaml
+
+# Check if values-secret.yaml exists
+if [ -f ../../receipts_project/helm_chart/values-secret.yaml ]; then
+  echo "🔍 values-secret.yaml exists. Proceeding with Helm upgrade..."
+  # Helm install all charts in receipts_project/helm
+  echo "🔄 Installing Helm charts..."
+  helm upgrade --install receipts-api ../../receipts_project/helm_chart -f ../../receipts_project/helm_chart/values.yaml -f ../../receipts_project/helm_chart/values-secret.yaml
+fi
+
 
 # Wait for Prometheus to be ready
 echo "⏳ Waiting for Prometheus pod to be Running..."
