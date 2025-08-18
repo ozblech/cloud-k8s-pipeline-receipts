@@ -7,10 +7,15 @@ resource "aws_s3_bucket" "receipts_bucket" {
   tags = {
     Name        = "Receipts Bucket"
   }
-  versioning {
-    enabled = true
-  }
+
   force_destroy = true // Allows deletion of non-empty buckets
+}
+
+resource "aws_s3_bucket_versioning" "receipts_bucket_versioning" {
+  bucket = aws_s3_bucket.receipts_bucket.id
+  versioning_configuration {
+    status = "Enabled"
+  }
 }
 
 // This policy only grants access to minikube_role

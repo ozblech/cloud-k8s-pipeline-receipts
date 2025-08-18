@@ -132,30 +132,6 @@ resource "aws_iam_role_policy" "github_actions_policy" {
           "arn:aws:s3:::${var.s3_bucket_name}",
           "arn:aws:s3:::${var.s3_bucket_name}/*"
         ]
-      },
-      {
-        Sid: "AllowSSMParameterStoreAccess",
-        Effect = "Allow",
-        Action = [
-          "ssm:GetParameter",
-          "ssm:GetParameters",
-          "ssm:GetParametersByPath"
-        ],
-        Resource = "*"
-      },
-      {
-        Sid: "AllowSecretsManagerAccess",
-        Effect: "Allow",
-        Action: [
-          "secretsmanager:GetSecretValue"
-        ],
-        Resource = "*"
-      },
-      {
-        Sid: "AllowSTSAssumeRole",
-        Effect: "Allow",
-        Action: "sts:AssumeRole",
-        Resource = "*"
       }
     ]
   })

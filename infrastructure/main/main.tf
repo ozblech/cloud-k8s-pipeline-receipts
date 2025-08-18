@@ -6,7 +6,6 @@ locals {
   my_ip = "${trim(data.http.my_ip.response_body, "\n")}/32"
 }
 
-
 // ------------------------
 // Modules
 // -------------------------

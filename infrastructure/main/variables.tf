@@ -31,11 +31,6 @@ variable "ami_name_filter"{
 variable "public_key_location"{
 }
 
-# variable "aws_account_id" {
-#   description = "Your AWS account ID"
-#   type        = string
-# }
-
 variable "github_repo" {
   description = "GitHub repo in the format: org/repo"
   type        = string
@@ -60,14 +55,17 @@ variable "postgres_ec2_private_ip" {
 variable "db_user" {
   description = "Database username encoded in base64 for PostgreSQL"
   type        = string
+  sensitive   = true
 }
 variable "db_password" {
   description = "Database password encoded in base64 for PostgreSQL"
   type        = string
+  sensitive   = true
 }
 variable "db_connection_string" {
   description = "Database connection string"
   type        = string
+  sensitive   = true
 }
 variable "s3_region" {
   description = "AWS region for the S3 bucket"
@@ -77,10 +75,12 @@ variable "s3_region" {
 variable "aws_access_key_id" {
   description = "AWS access key ID"
   type        = string
+  sensitive   = true
 }
 variable "aws_secret_access_key" {
   description = "AWS secret access key"
   type        = string
+  sensitive   = true
 }
 variable "secret_name" {
   description = "Name of the secret in AWS Secrets Manager"

@@ -13,7 +13,7 @@ resource "aws_security_group" "postgres_sg" {
         from_port   = 5432
         to_port     = 5432
         protocol    = "tcp"
-        security_groups = [aws_security_group.minikube_sg.id] 
+        security_groups = [aws_security_group.minikube_sg.id] // Allows incoming traffic only from the Minikube security group
     }
 
     // Only allows outbound HTTPS traffic (TCP 443). If your setup_postgres.sh only needs to download packages or files over HTTPS, this is all you need.
@@ -40,14 +40,6 @@ resource "aws_security_group" "minikube_sg" {
         protocol    = "tcp"
         cidr_blocks = [var.my_ip] // My IP
     }
-
-    # ingress {
-    #     description = "SSH access from github actions"
-    #     from_port   = 22
-    #     to_port     = 22
-    #     protocol    = "tcp"
-    #     cidr_blocks = ["0.0.0.0/0"] // Allow SSH from anywhere (for testing purposes)
-    # }
 
     ingress {
     description = "Kubernetes API access"

@@ -45,7 +45,7 @@ resource "aws_route_table" "public_rt" {
         gateway_id = aws_internet_gateway.my_igw.id
     }
     tags = {
-        Name: "public-route-table"
+        Name = "public-route-table"
     }
 
 }
@@ -81,7 +81,7 @@ resource "aws_route_table_association" "private" {
 // NAT Gateway
 resource "aws_nat_gateway" "nat_gw" {
   allocation_id = aws_eip.nat_eip.id
-  subnet_id     = aws_subnet.public_subnets[0].id // Use the first public subnet for the NAT gateway
+  subnet_id     = element(aws_subnet.public_subnets[*].id, 0) // Use the first public subnet for the NAT gateway
 
   tags = {
     Name = "nat-gateway"
