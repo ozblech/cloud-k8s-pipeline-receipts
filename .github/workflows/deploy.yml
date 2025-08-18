@@ -84,3 +84,4 @@ jobs:
       #       --parameters commands=["export KUBECONFIG=/home/ec2-user/.kube/config","kubectl set image deployment/receipts-api receipts-api=ozblech/receipts-api:$IMAGE_TAG"] \
       #       --cloud-watch-output-config CloudWatchOutputEnabled=true \
       #       --output text
+      
