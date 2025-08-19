@@ -1,0 +1,14 @@
+{
+  "commands": [
+    "#!/bin/bash",
+    "export KUBECONFIG=${KUBECONFIG_PATH}",
+    "if [ -z ${REVISION_INPUT} ]; then",
+    "  echo Rolling back to previous image tag",
+    "  kubectl rollout undo deployment/${DEPLOYMENT_NAME}",
+    "else",
+    "  echo \"Rolling back to revision: ${REVISION_INPUT}\"",
+    "  kubectl rollout undo deployment/${DEPLOYMENT_NAME} --to-revision=${REVISION_INPUT} -n default",
+    "fi",
+    "kubectl rollout status deployment/${DEPLOYMENT_NAME} -n default"
+  ]
+}

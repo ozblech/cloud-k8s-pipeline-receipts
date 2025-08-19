@@ -1,7 +1,7 @@
 #!/bin/bash
 exec > >(tee /var/log/postgres-bootstrap.log | logger -t user-data -s) 2>&1
-# set -eux means the script will exit on any error and print each command before executing it
-set -eux
+# set -eu means the script will exit on any error and print each command before executing it
+set -eu
 
 DB_USER=$(echo "${DB_USER_B64}" | base64 -d)
 DB_PASSWORD=$(echo "${DB_PASSWORD_B64}" | base64 -d)

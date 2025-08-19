@@ -1,5 +1,5 @@
 # Use an official Python base image
-FROM python:3.11-slim
+FROM python:3.11-slim AS builder
 
 # Set environment variables
 # This tells Python not to write .pyc files (compiled bytecode files).
@@ -10,7 +10,7 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
 # Install OS-level dependencies
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends\
     gcc \
     libpq-dev \
     curl \
@@ -22,14 +22,25 @@ WORKDIR /app
 # Copy requirements (if using requirements.txt)
 COPY requirements.txt .
 
-# Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+# Install dependencies into a folder (not global site-packages)
+RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
 
-# Copy app source
+
+# Stage 2: Runtime
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Copy installed dependencies from builder
+COPY --from=builder /install /usr/local
+
+# Copy only the application source
 COPY main.py .
 
-# Set default Flask port
+# Security: create a non-root user
+RUN useradd -m appuser
+USER appuser
+
 EXPOSE 5000
 
-# Define the startup command
 CMD ["python", "main.py"]

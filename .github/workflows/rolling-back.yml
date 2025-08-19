@@ -32,33 +32,37 @@ jobs:
           aws_account_id: ${{ secrets.AWS_ACCOUNT_ID }}
           aws_region: ${{ env.AWS_REGION }}
 
-
-      - name: Build rollback command dynamically into JSON file
-        id: generate-commands-file
-        env:
-          REVISION_INPUT: ${{ github.event.inputs.revision }}
-          DEPLOYMENT_NAME: ${{ env.DEPLOYMENT_NAME }}
-          IMAGE_REPO: ${{ env.IMAGE_REPO }}
-          KUBECONFIG_PATH: ${{ vars.KUBECONFIG_PATH }}
+      - name: Envsubstitute variables in rollback command
         run: |
-          jq -n --arg r "$REVISION_INPUT" \
-                --arg d "$DEPLOYMENT_NAME" \
-                --arg i "$IMAGE_REPO" \
-                --arg kubeconfig_path "$KUBECONFIG_PATH" \
-          '{
-            commands: [
-              "#!/bin/bash",
-              "export KUBECONFIG=\($kubeconfig_path)",
-              (if $r == "" then
-                "echo Rolling back to previous image tag",
-                "kubectl rollout undo deployment/\($d)"
-              else
-                "echo \"Rolling back to revision: \($r)\"",
-                "kubectl rollout undo deployment/\($d) --to-revision=\($r) -n default"
-              end),
-              "kubectl rollout status deployment/\($d) -n default"
-            ]
-          }' > commands.json
+          envsubst '$IMAGE_REPO,$DEPLOYMENT_NAME,$KUBECONFIG_PATH' < .github/ssm-commands/rollback.json > rollback.json
+          cat rollback.json
+
+      # - name: Build rollback command dynamically into JSON file
+      #   id: generate-commands-file
+      #   env:
+      #     REVISION_INPUT: ${{ github.event.inputs.revision }}
+      #     DEPLOYMENT_NAME: ${{ env.DEPLOYMENT_NAME }}
+      #     IMAGE_REPO: ${{ env.IMAGE_REPO }}
+      #     KUBECONFIG_PATH: ${{ vars.KUBECONFIG_PATH }}
+      #   run: |
+      #     jq -n --arg r "$REVISION_INPUT" \
+      #           --arg d "$DEPLOYMENT_NAME" \
+      #           --arg i "$IMAGE_REPO" \
+      #           --arg kubeconfig_path "$KUBECONFIG_PATH" \
+      #     '{
+      #       commands: [
+      #         "#!/bin/bash",
+      #         "export KUBECONFIG=\($kubeconfig_path)",
+      #         (if $r == "" then
+      #           "echo Rolling back to previous image tag",
+      #           "kubectl rollout undo deployment/\($d)"
+      #         else
+      #           "echo \"Rolling back to revision: \($r)\"",
+      #           "kubectl rollout undo deployment/\($d) --to-revision=\($r) -n default"
+      #         end),
+      #         "kubectl rollout status deployment/\($d) -n default"
+      #       ]
+      #     }' > commands.json
 
 
       - name: Run SSM command using action
@@ -67,7 +71,7 @@ jobs:
         with:
           aws_account_id: ${{ secrets.AWS_ACCOUNT_ID }}
           instance_id: ${{ steps.fetch-minikube-ec2-ip.outputs.instance_id }}
-          commands-file-name: commands.json
+          commands-file-name: rollback.json
           aws_region: ${{ env.AWS_REGION }}
 
       - name: Generate command file to verify image
