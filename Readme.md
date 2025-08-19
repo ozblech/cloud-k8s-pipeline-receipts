@@ -85,23 +85,23 @@ Triggered when new code is merged/pushed into master.
 
 Workflow steps:
 
-1.Bump version automatically.
+1. Bump version automatically.
 
-2.Build a new Docker image of the application.
+2. Build a new Docker image of the application.
 
-3.Push the image to Docker Hub, tagged with the new version + commit SHA.
+3. Push the image to Docker Hub, tagged with the new version + commit SHA.
 
-4.Deploy the image to the Minikube EC2 cluster via Helm.
+4. Deploy the image to the Minikube EC2 cluster via Helm.
 
-5.Validate rollout with kubectl rollout status.
+5. Validate rollout with kubectl rollout status.
 
 🔄 Rollback Workflow
 
 A separate workflow allows rolling back the Kubernetes deployment to:
 
-*A specific version (by providing the tag).
+* A specific version (by providing the tag).
 
-*Or the previous working version (default).
+* Or the previous working version (default).
 
 📊 Workflow Summary
 ```pgsql
