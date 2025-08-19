@@ -1,6 +1,6 @@
 # 🚀 Cloud K8s Pipeline for Receipts API
 
-This repository provisions AWS infrastructure with Terraform, deploys a Helm chart to a Minikube cluster running on EC2, and updates the app automatically when changes are pushed to the `master` branch.
+This repository provisions AWS infrastructure with Terraform, deploys a Helm chart to a Minikube cluster running on EC2, and sets up a CI/CD pipeline with GitHub Actions to automatically build, push, and deploy the application.
 
 ---
 
@@ -8,7 +8,8 @@ This repository provisions AWS infrastructure with Terraform, deploys a Helm cha
 
 Before running any workflows, make sure your GitHub repository has the following **Secrets** and **Variables** set.
 
-### GitHub **Secrets** (Repository Settings → Secrets and variables → Actions → Secrets)
+🔑 GitHub Secrets
+(Repository Settings → Secrets and variables → Actions → Secrets)
 | Name                  | Example Value / Notes                               |
 |-----------------------|-----------------------------------------------------|
 | `AWS_ACCOUNT_ID`      | Your AWS account ID (12 digits)                     |
@@ -19,7 +20,8 @@ Before running any workflows, make sure your GitHub repository has the following
 
 ---
 
-### GitHub **Variables** (Repository Settings → Secrets and variables → Actions → Variables)
+⚙️ GitHub Variables
+(Repository Settings → Secrets and variables → Actions → Variables)
 | Name                     | Example Value                                              |
 |--------------------------|------------------------------------------------------------|
 | `DEPLOYMENT_NAME`        | `receipts-api`                                             |
@@ -31,7 +33,7 @@ Before running any workflows, make sure your GitHub repository has the following
 
 ## 2️⃣ Set Terraform Variables
 
-Edit the `terraform.tfvars` file in the root of your Terraform project (DO NOT PUSH TO GIT):
+Edit the `terraform.tfvars` file in the root of your Terraform project (⚠️ DO NOT PUSH TO GIT)::
 
 ```hcl
 public_key_location     = ""  # Path to your SSH public key
@@ -65,14 +67,50 @@ This script:
 3.Runs connect-to-minikube.sh to set up your kubectl context.
 
 
-## 4️⃣ Automatic Deployment on Push
+## 4️⃣ CI/CD Pipeline (GitHub Actions)
 
-Every time you push to the master branch:
-    • GitHub Actions builds a new Docker image.
-    • Tags it with the latest commit SHA.
-    • Deploys it to the Minikube cluster on EC2 using Helm.
-No manual steps required 🚀
+The repository includes three workflows:
 
+✅ CI – Continuous Integration (Pull Requests → master)
+
+Runs automatically when a Pull Request is opened against master.
+
+Executes unit tests to validate changes.
+
+Ensures only tested code can be merged into master.
+
+🚀 CD – Continuous Deployment (Push → master)
+
+Triggered when new code is merged/pushed into master.
+
+Workflow steps:
+
+Bump version automatically.
+
+Build a new Docker image of the application.
+
+Push the image to Docker Hub, tagged with the new version + commit SHA.
+
+Deploy the image to the Minikube EC2 cluster via Helm.
+
+Validate rollout with kubectl rollout status.
+
+🔄 Rollback Workflow
+
+A separate workflow allows rolling back the Kubernetes deployment to:
+
+A specific version (by providing the tag).
+
+Or the previous working version (default).
+
+📊 Workflow Summary
+```pgsql
+PR → master   → Run unit tests ✅
+Push → master → Bump version → Build → Push image → Deploy 🚀
+Rollback      → Revert deployment to previous/specified version 🔄
+```
+
+No manual steps required — the pipeline ensures tested, versioned, and continuously deployed releases.
 
 ## 5️⃣ Commands to test from local machine
 
