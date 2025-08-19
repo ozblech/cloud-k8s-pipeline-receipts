@@ -60,11 +60,11 @@ Run the deployment script from the infrastructure/main directory:
 /deploy-and-connect.sh
 This script:
 
-1.Runs terraform apply to provision AWS resources.
+1. Runs terraform apply to provision AWS resources.
 
-2.Waits briefly for services to initialize.
+2. Waits briefly for services to initialize.
 
-3.Runs connect-to-minikube.sh to set up your kubectl context.
+3. Runs connect-to-minikube.sh to set up your kubectl context.
 
 
 ## 4️⃣ CI/CD Pipeline (GitHub Actions)
