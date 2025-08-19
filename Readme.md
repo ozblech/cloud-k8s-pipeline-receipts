@@ -73,11 +73,11 @@ The repository includes three workflows:
 
 ✅ CI – Continuous Integration (Pull Requests → master)
 
-Runs automatically when a Pull Request is opened against master.
+* Runs automatically when a Pull Request is opened against master.
 
-Executes unit tests to validate changes.
+* Executes unit tests to validate changes.
 
-Ensures only tested code can be merged into master.
+* Ensures only tested code can be merged into master.
 
 🚀 CD – Continuous Deployment (Push → master)
 
