@@ -1,5 +1,6 @@
 provider "aws" {
   region = "us-west-2"
+  profile = "default" //This is how you specify the AWS profile to use (from .aws/credentials file)
 }
 
 resource "aws_s3_bucket" "terraform_state" {
