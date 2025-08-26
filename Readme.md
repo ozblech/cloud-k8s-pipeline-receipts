@@ -121,3 +121,117 @@ curl -X POST -F "file=@receipts_project/receipts/gcp.txt" http://localhost:5000/
 Print all receipts:
 
 curl http://localhost:5000/receipts
+
+
+
+### 🔑 OIDC-based IAM Role
+
+* Normally, to let GitHub Actions talk to AWS, you’d have to store long-lived AWS access keys in your repo (bad practice).
+
+* Instead, with OIDC (OpenID Connect), GitHub’s workflow identity can request a short-lived AWS IAM role at runtime.
+
+* In AWS IAM, you create a role with a trust policy that allows GitHub’s OIDC provider (token.actions.githubusercontent.com) to assume it, but only for:
+
+    * Your repo name
+
+    * Specific environments/branches
+
+* This gives temporary credentials to the workflow, scoped only to what’s needed.
+
+✅ In your project:
+You used the OIDC role to call AWS APIs directly from GitHub Actions — e.g., to fetch the EC2 public IP via the DescribeInstances API.
+
+### 🖥️ AWS SSM (Systems Manager)
+
+* Normally, to run commands on EC2, you’d need SSH keys and open port 22.
+
+* With SSM Agent installed on EC2 + proper IAM role attached, you can run commands securely without opening SSH.
+
+* You use the AWS CLI:
+
+```bash
+aws ssm send-command \
+  --targets "Key=instanceIds,Values=<EC2-ID>" \
+  --document-name "AWS-RunShellScript" \
+  --comment "Deploy app" \
+  --parameters 'commands=["docker ps"]'
+```
+
+SSM executes the command inside the EC2 and returns the output back to you.
+
+✅ In your project:
+
+* OIDC gave GitHub Actions the ability to call ssm:SendCommand (no stored keys).
+
+* SSM executed deployment/maintenance commands on EC2.
+
+* You didn’t need SSH keys or open inbound ports, which is a big security win.
+
+### 🔗 Putting It Together
+
+1. GitHub Actions requests an OIDC token → exchanges it for AWS IAM Role creds.
+
+2. Workflow uses creds to query EC2 public IP.
+
+3. Workflow sends commands via SSM to that EC2 for deployments.
+
+4. No long-lived credentials, no SSH, all secured through IAM + SSM.
+
+👉 This is a modern, secure DevOps pattern — combining OIDC for short-lived access + SSM for remote execution.
+If asked in an interview, you can emphasize that you eliminated:
+
+* Hardcoded AWS keys
+
+* Open SSH ports
+
+* Manual access to servers
+
+
+# Organizing AWS environments:
+
+# 1️⃣ Same AWS Account Across Environments
+
+* If dev, staging, prod are in the same AWS account, you usually just need one profile (e.g., default) and switch workspaces in Terraform.
+
+Example:
+```hcl
+terraform workspace select dev
+terraform apply -var-file=envs/dev.tfvars
+
+terraform workspace select prod
+terraform apply -var-file=envs/prod.tfvars
+```
+
+✅ Pros:
+
+* Simple setup, no need to manage multiple profiles.
+
+* State isolation handled by workspaces.
+
+❌ Cons:
+
+* All environments share the same AWS account, so you must be careful with naming and resource isolation.
+
+# 2️⃣ Different AWS Accounts per Environment
+
+* If each environment has its own AWS account (common in production setups for security), you should use different profiles:
+```hcl
+provider "aws" {
+  region  = var.region
+  profile = terraform.workspace == "prod" ? "prod-profile" : "dev-profile"
+}
+```
+
+* dev-profile → credentials for dev account
+
+* prod-profile → credentials for prod account
+
+✅ Pros:
+
+* Strong isolation between environments.
+
+* Limits blast radius if something goes wrong in one environment.
+
+❌ Cons:
+
+* Slightly more setup, but safer for production.
