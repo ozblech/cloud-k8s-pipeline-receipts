@@ -63,7 +63,7 @@ jobs:
         with:
           aws_account_id: ${{ secrets.AWS_ACCOUNT_ID }}
           instance_id: ${{ steps.fetch-minikube-ec2-ip.outputs.instance_id }}
-          commands-file-name: copy-helm-and-script-and-deploy.json
+          commands-file-name: copy-script-and-deploy.json
           aws_region: ${{ env.AWS_REGION }}
 
       # - name: Configure AWS Credentials

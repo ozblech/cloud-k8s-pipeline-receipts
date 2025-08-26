@@ -1,0 +1,7 @@
+{
+  "commands": [
+    "aws s3 cp s3://${S3_BUCKET_NAME}/deploy.sh /tmp/deploy.sh --region ${AWS_REGION}",
+    "chmod +x /tmp/deploy.sh",
+    "/tmp/deploy.sh"
+  ]
+}

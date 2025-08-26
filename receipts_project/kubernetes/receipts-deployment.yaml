@@ -55,6 +55,40 @@ spec:
                 secretKeyRef:
                   name: receipts-secrets
                   key: AWS_SECRET_ACCESS_KEY
+
+# ############## in order to improve: #############
+# Using latest is risky → every redeploy could pull a different image version unexpectedly.
+# Add resources block:
+#          resources:
+#            requests:
+#              memory: "256Mi"
+#              cpu: "250m"
+#            limits:
+#              memory: "512Mi"
+#              cpu: "500m"
+#      imagePullSecrets:
+#        - name: regcred  # Assuming you have a secret for pulling images from a private registry
+#
+# Add readiness or liveness probes
+# livenessProbe:
+#   httpGet:
+#     path: /health
+#     port: 3000
+#   initialDelaySeconds: 10
+#   periodSeconds: 15
+
+# readinessProbe:
+#   httpGet:
+#     path: /health
+#     port: 3000
+#   initialDelaySeconds: 5
+#   periodSeconds: 10
+#
+# Run as non-root user:
+# securityContext:
+#   runAsUser: 1000
+#   runAsGroup: 1000
+#   runAsNonRoot: true
 ---
 # receipts-service.yaml
 apiVersion: v1
