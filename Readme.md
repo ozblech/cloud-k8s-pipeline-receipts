@@ -122,7 +122,8 @@ Print all receipts:
 
 curl http://localhost:5000/receipts
 
-
+---
+# OIDC and SSM
 
 ### 🔑 OIDC-based IAM Role
 
@@ -186,7 +187,7 @@ If asked in an interview, you can emphasize that you eliminated:
 
 * Manual access to servers
 
-
+---
 # Organizing AWS environments:
 
 # 1️⃣ Same AWS Account Across Environments
